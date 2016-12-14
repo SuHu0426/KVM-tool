@@ -1,0 +1,314 @@
+#!/bin/bash
+#
+# Copyright (c) 1998, 1999, 2000, 2002  by Marcus Brinkmann.
+# Copyright (c) 2003, 2004, 2005 by Robert Millan.
+# Licensed under the GNU GPLv2 or later.
+#
+# Parts of this script was taken from the SETUP script in Hurd CVS. 
+
+
+export \
+PATH="/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin:/usr/bin/X11:/usr/games"
+
+# This must come before evaluating `uname -s` because, on GNU,
+# without the pflocal server set as a translator on
+# /servers/socket/1, pipes cannot be created.
+if ! test -e /servers/socket/1 && which settrans >/dev/null ; then
+  settrans -c /servers/socket/1 /hurd/pflocal
+fi
+
+system=`uname -s`
+
+# Make sure the filesystem is writeable
+echo Checking if your filesystem is really writeable..
+case "${system}" in
+  "")		echo failed to identify system ; exit 1 ;;
+  GNU)		if which fsysopts >/dev/null ; then fsysopts / --writable ; fi ;;
+  Linux)	if which mount >/dev/null ; then mount -o rw,remount / ; fi ;;
+  *)		if which mount >/dev/null ; then mount -o rw / ; fi ;;
+esac
+
+set -e
+
+parent_term="$TERM"
+
+case "${system}" in
+  GNU)
+	if [ "$TERM" = "dumb" ] ; then
+	  export TERM=mach
+	fi
+	if [ -d /proc ] ; then 
+		echo Existing system found, exitting.
+		exit 1
+	fi
+
+	if [ ! -e /dev/console ] ; then
+
+		# Set up standard passive translators
+		echo
+		echo Now I set up the translators. If you get Operation not supported
+		echo errors, you have forgotten to set the file system owner to '"hurd"'!
+
+		settrans -k /servers/socket/1 /hurd/pflocal
+		settrans -c /servers/socket/2 /hurd/pfinet
+		settrans -k /servers/exec /hurd/exec
+		settrans -c /servers/crash-suspend /hurd/crash --suspend
+		settrans -c /servers/crash-kill /hurd/crash --kill
+		settrans -c /servers/password /hurd/password
+	        settrans -c /servers/default-pager /hurd/proxy-defpager
+
+		# Not functional yet:
+		settrans -c /servers/crash-dump-core /hurd/crash --dump-core
+		if [ ! -e /servers/crash ] ; then
+			ln -s crash-kill /servers/crash
+		fi
+		if [ ! -e /servers/socket/local ] ; then
+			ln -s 1 /servers/socket/local
+		fi
+		if [ ! -e /servers/socket/inet ] ; then
+			ln -s 2 /servers/socket/inet
+		fi
+
+		# We need /dev/fd to call scripts.
+		cd /dev
+		sh ./MAKEDEV -v fd
+
+		# Setup crucial devices.
+		echo
+		echo The next job is to setup device files.
+		cd /dev
+		sh ./MAKEDEV -v std ptyp ptyq com0
+		sh ./MAKEDEV vcs tty1 tty2 tty3 tty4 tty5 tty6
+
+		# Not crucial, but will not hurt either.
+		sh ./MAKEDEV hd0
+	fi
+
+	# Make sure that the runsystem stuff will work
+	if [ -e /libexec/runsystem.gnu -a -e /libexec/runsystem ] ; then
+	  echo Removing /libexec/runsystem again, so the Hurd package can
+	  echo take care about it.
+	  rm /libexec/runsystem
+	fi
+  ;;
+  Linux)
+	mount -t proc proc /proc
+	test -e /etc/mtab || ln -s /proc/mounts /etc/mtab
+	cd /dev && MAKEDEV std generic
+  ;;
+  *FreeBSD)
+	if test -e /dev/null && test ! -c /dev/null ; then
+	  echo "/dev/null exists but is not a character device, removing it"
+	  rm -f /dev/null
+	fi
+	case `uname -r` in
+	  4.*)	echo Copy device files into /dev before running $0
+		exit ;;
+	  *)	mount -t devfs null /dev ;;
+	esac
+	if [ "$TERM" = "dumb" ] ; then
+	  export TERM=cons25
+	fi
+  ;;
+esac
+
+# Debian set up.
+echo
+echo Configuring Debian packages.
+
+# Avoid username resolving errors
+cp /usr/share/base-passwd/passwd.master /etc/passwd
+cp /usr/share/base-passwd/group.master /etc/group
+
+# Make sure /etc/shadow is available
+/sbin/shadowconfig on
+
+debs=`for i in /var/cache/apt/archives/*.deb ; do
+case $i in
+  /var/cache/apt/archives/dpkg_*.deb) ;;
+  *) echo $i ;;
+esac ; done`
+ssd=`which start-stop-daemon || echo /sbin/start-stop-daemon`
+
+# install dpkg and libc
+dpkg --force-depends -i /var/cache/apt/archives/gawk_*.deb
+dpkg --force-depends -i /var/cache/apt/archives/base-{files,passwd}_*.deb
+dpkg --force-depends -i /var/cache/apt/archives/dpkg_*.deb
+if ! test -e ${ssd}.real ; then mv ${ssd}{,.real} ; fi
+cp /bin/true $ssd
+dpkg --force-depends -i /var/cache/apt/archives/libc[0-9]*.deb
+dpkg --force-depends -i /var/cache/apt/archives/perl-base_*.deb
+dpkg --force-depends -i /var/cache/apt/archives/debconf_*.deb
+
+# reinstall hurd package, if applicable
+if [ -e /var/cache/apt/archives/hurd_*.deb ] ; then
+	dpkg --force-depends -i /var/cache/apt/archives/adduser_*.deb
+	dpkg --force-depends -i /var/cache/apt/archives/hurd_*.deb
+fi
+
+	dpkg --force-depends -i /var/cache/apt/archives/insserv_*.deb  # Phil
+
+# install required packages
+for i in /var/cache/apt/archives/*.deb ; do 
+	dpkg --info $i | grep ^\ Priority:.required > /dev/null \
+	&& dpkg --force-depends --skip-same-version --unpack $i
+done
+dpkg --configure --pending --force-configure-any --force-depends
+if ! test -e ${ssd}.real ; then mv ${ssd}{,.real} ; fi
+cp /bin/true $ssd
+
+# install base packages
+for i in /var/cache/apt/archives/*.deb ; do
+	dpkg --force-overwrite --force-confold \
+	--skip-same-version --unpack $i
+done
+dpkg  --force-confold --skip-same-version  --configure -a
+mv $ssd{.real,}
+
+# post-install configuration
+
+# some boot tarballs have a hacked inittab, let's restore it.
+if [ -e /usr/share/sysvinit/inittab ] ; then
+        cp /usr/share/sysvinit/inittab /etc/inittab
+fi
+
+case "${system}" in
+  GNU)
+	echo I just make sure that /libexec/runsystem is properly updated.
+	if [ ! -e /libexec/runsystem -a -e /libexec/runsystem.gnu ] ; then
+	  echo WHOA! We\'re in deep trouble. The Hurd package did not update
+	  echo the link in /libexec/runsystem. For now, I am making a link
+	  echo manually, but please report this.
+	  ln -s runsystem.gnu /libexec/runsystem
+	fi
+
+	# fstab stuff
+	fstype=`fsysopts / | perl -ne 'm!^.*/hurd/(.*?)\.static.*?([^\s]+)\s*?$!; print $1;'`
+	rootpart=`fsysopts / | perl -ne 'm!^.*/hurd/(.*?)\.static.*?([^\s]+)\s*?$!; print $2;' | sed -e "s/^device\://"`
+	if [ ! -e /dev/${rootpart} ] ; then
+		cd /dev
+		sh ./MAKEDEV ${rootpart} || true
+	fi
+
+	if [ x${fstype} = xext2fs ] ; then
+		fstype=ext2
+	fi
+        fstype_dummy="ext2"
+        rootpart_dummy="hd0s2"
+	swappart_dummy="hd0s1"
+
+	#proc=`ps ax | grep hurd/term | grep dev/console | sed -e 's/[a-z ]*\([0-9]*\) .*/\1/'`
+	#if [ ! -z $proc ] ; then
+	#	echo
+	#	echo Found dangling console server, which will suck up
+	#	echo every second character you type. That is a bug, and
+	#	echo I will kill this process for you.
+	#	kill $proc
+	#fi
+	procfs="none"
+  ;;
+  *FreeBSD)
+	cat > /etc/network/interfaces << __EOF__
+# Sample /etc/network/interfaces file for GNU/kFreeBSD
+
+auto lo0
+iface lo0 inet loopback
+
+# DHCP network (replace ed0 with your interface, if different)
+#auto ed0
+#iface ed0 inet dhcp
+
+# Static network (replace ed0 with your interface, if different)
+#auto ed0
+#iface ed0 inet static
+#	address 192.168.0.3
+#	network 192.168.0.0
+#	netmask 255.255.255.0
+#	gateway 192.168.0.1
+__EOF__
+
+	# fstab stuff
+	fstype="`mount | grep ' on / ' | cut -d '(' -f 2 | cut -d ',' -f 1`"
+	rootpart="`mount | grep ' on / ' | cut -d / -f 3 | cut -d ' ' -f 1`"
+        fstype_dummy="ufs"
+        rootpart_dummy="ad0s1a"
+	swappart_dummy="ad0s1b"
+
+	# hack for installs from livecd
+	case "$fstype:$rootpart" in
+	  cd9660:*|*:/dev/acd*)
+	    fstype="$fstype_dummy"
+	    rootpart="$rootpart_dummy"
+	  ;;
+	esac
+	procfs="linprocfs"
+  ;;
+  Linux)
+	umount /proc
+
+	# fstab stuff
+	fstype="`mount | grep ' on / ' | cut -d ' ' -f 5`"
+	rootpart="`mount | grep ' on / ' | cut -d / -f 3 | cut -d ' ' -f 1`"
+        fstype_dummy="ext2"
+        swappart_dummy="hda2"
+        rootpart_dummy="hda1"
+	procfs="proc"
+  ;;
+esac
+
+fstab_dummy="\
+#/dev/${rootpart_dummy}	/		${fstype_dummy}	rw			1	1
+#/dev/${swappart_dummy}	none		swap	sw			0	0
+"
+fstab_good="\
+/dev/${rootpart}	/		${fstype}	rw			1	1
+#/dev/${swappart_dummy}	none		swap	sw			0	0
+"
+
+cat > /etc/fstab << __EOF__
+# /etc/fstab: static file system information
+#
+# <file system>	<mount point>	<type>	<options>		<dump>	<pass>
+__EOF__
+
+
+if [ ! -e /dev/${rootpart} ] ; then
+	echo Couldn\'t determine root partition, sorry.
+	echo You have to edit /etc/fstab to match your system.
+	echo However, for your convenience, I will install a dummy entry.
+	echo "$fstab_dummy" >> /etc/fstab
+else
+	echo Your root partition is /dev/${rootpart}.
+	echo Your file system type is ${fstype}.
+	echo If this information is not correct, you need to edit /etc/fstab.
+	echo "$fstab_good" >> /etc/fstab
+fi
+
+if [ "${procfs}" != "none" ] ; then
+  echo "null	/proc	${procfs}	rw	0 0" >> /etc/fstab
+fi
+
+echo
+echo "If you have a swap partition, please add it to /etc/fstab."
+echo
+echo "Available editors are:"
+which nano vi zile emacs || true
+echo
+# rm -f /sbin/MAKEDEV; cp -f /MAKEDEV /sbin/MAKEDEV
+
+case "${system}:$parent_term" in
+  GNU:*)
+    echo 'You should reboot now, and enter multi-user mode. Note that'
+    echo 'you will have to activate the Hurd console manually currently.'
+    echo 'To do this, run'
+    echo '  console -d vga -d pc_kbd --repeat=kbd -d pc_mouse --repeat=mouse \'
+    echo '          -d generic_speaker -c /dev/vcs'
+    echo 'as root after you have logged in.'
+    ;;
+  *FreeBSD:dumb)
+    echo "Looks like you are using a dumb terminal.  In order to get a fully"
+    echo "functional one, you need to run \"export TERM=cons25\"."
+    ;;
+esac
+
+sync

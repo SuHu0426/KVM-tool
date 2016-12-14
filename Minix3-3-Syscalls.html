@@ -1,0 +1,704 @@
+
+<h3>All System Calls Extracted From /usr/include/minix/com.h</h3>
+
+<PRE>
+/*===========================================================================*
+ *                  SYSTASK request types and field names                    *
+ *===========================================================================*/
+
+/* System library calls are dispatched via a call vector, so be careful when 
+ * modifying the system call numbers. The numbers here determine which call
+ * is made from the call vector.
+ */ 
+#define KERNEL_CALL	0x600	/* base for kernel calls to SYSTEM */ 
+
+#  define SYS_FORK       (KERNEL_CALL + 0)	/* sys_fork() */
+#  define SYS_EXEC       (KERNEL_CALL + 1)	/* sys_exec() */
+#  define SYS_CLEAR	 (KERNEL_CALL + 2)	/* sys_clear() */
+#  define SYS_SCHEDULE 	 (KERNEL_CALL + 3)	/* sys_schedule() */
+#  define SYS_PRIVCTL    (KERNEL_CALL + 4)	/* sys_privctl() */
+#  define SYS_TRACE      (KERNEL_CALL + 5)	/* sys_trace() */
+#  define SYS_KILL       (KERNEL_CALL + 6)	/* sys_kill() */
+
+#  define SYS_GETKSIG    (KERNEL_CALL + 7)	/* sys_getsig() */
+#  define SYS_ENDKSIG    (KERNEL_CALL + 8)	/* sys_endsig() */
+#  define SYS_SIGSEND    (KERNEL_CALL + 9)	/* sys_sigsend() */
+#  define SYS_SIGRETURN  (KERNEL_CALL + 10)	/* sys_sigreturn() */
+
+#  define SYS_MEMSET     (KERNEL_CALL + 13)	/* sys_memset() */
+
+#  define SYS_UMAP       (KERNEL_CALL + 14)	/* sys_umap() */
+#  define SYS_VIRCOPY    (KERNEL_CALL + 15)	/* sys_vircopy() */
+#  define SYS_PHYSCOPY   (KERNEL_CALL + 16) 	/* sys_physcopy() */
+#  define SYS_UMAP_REMOTE (KERNEL_CALL + 17)	/* sys_umap_remote() */
+#  define SYS_VUMAP      (KERNEL_CALL + 18)	/* sys_vumap() */
+
+#  define SYS_IRQCTL     (KERNEL_CALL + 19)	/* sys_irqctl() */
+#  define SYS_INT86      (KERNEL_CALL + 20)	/* sys_int86() */
+#  define SYS_DEVIO      (KERNEL_CALL + 21)	/* sys_devio() */
+#  define SYS_SDEVIO     (KERNEL_CALL + 22)	/* sys_sdevio() */
+#  define SYS_VDEVIO     (KERNEL_CALL + 23)	/* sys_vdevio() */
+
+#  define SYS_SETALARM	 (KERNEL_CALL + 24)	/* sys_setalarm() */
+#  define SYS_TIMES	 (KERNEL_CALL + 25)	/* sys_times() */
+#  define SYS_GETINFO    (KERNEL_CALL + 26) 	/* sys_getinfo() */
+#  define SYS_ABORT      (KERNEL_CALL + 27)	/* sys_abort() */
+#  define SYS_IOPENABLE  (KERNEL_CALL + 28)	/* sys_enable_iop() */
+#  define SYS_SAFECOPYFROM (KERNEL_CALL + 31)	/* sys_safecopyfrom() */
+#  define SYS_SAFECOPYTO   (KERNEL_CALL + 32)	/* sys_safecopyto() */
+#  define SYS_VSAFECOPY  (KERNEL_CALL + 33)	/* sys_vsafecopy() */
+#  define SYS_SETGRANT   (KERNEL_CALL + 34)	/* sys_setgrant() */
+#  define SYS_READBIOS   (KERNEL_CALL + 35)	/* sys_readbios() */
+
+#  define SYS_SPROF      (KERNEL_CALL + 36)     /* sys_sprof() */ 
+#  define SYS_CPROF      (KERNEL_CALL + 37)     /* sys_cprof() */
+#  define SYS_PROFBUF    (KERNEL_CALL + 38)     /* sys_profbuf() */
+
+#  define SYS_STIME      (KERNEL_CALL + 39)	/* sys_stime() */
+#  define SYS_SETTIME    (KERNEL_CALL + 40)	/* sys_settime() */
+
+#  define SYS_VMCTL      (KERNEL_CALL + 43)	/* sys_vmctl() */
+
+#  define SYS_DIAGCTL    (KERNEL_CALL + 44)	/* sys_diagctl() */
+
+#  define SYS_VTIMER     (KERNEL_CALL + 45)	/* sys_vtimer() */
+#  define SYS_RUNCTL     (KERNEL_CALL + 46)	/* sys_runctl() */
+#  define SYS_GETMCONTEXT (KERNEL_CALL + 50)    /* sys_getmcontext() */
+#  define SYS_SETMCONTEXT (KERNEL_CALL + 51)    /* sys_setmcontext() */
+
+#  define SYS_UPDATE	 (KERNEL_CALL + 52)	/* sys_update() */
+#  define SYS_EXIT	 (KERNEL_CALL + 53)	/* sys_exit() */
+
+#  define SYS_SCHEDCTL (KERNEL_CALL + 54)	/* sys_schedctl() */
+#  define SYS_STATECTL (KERNEL_CALL + 55)	/* sys_statectl() */
+
+#  define SYS_SAFEMEMSET (KERNEL_CALL + 56)	/* sys_safememset() */
+
+#  define SYS_PADCONF (KERNEL_CALL + 57)	/* sys_padconf() */
+
+/* Total */
+#define NR_SYS_CALLS	58	/* number of kernel calls */
+</PRE>
+
+<h3>Missing calls: 11 12 29 30 41 42 47 48 49</h3>
+
+
+<h3>MINIX 3: <a href="http://wiki.minix3.org/doku.php?id=usersguide:start">Users 
+Guide</a>&nbsp;&nbsp;<a href="http://wiki.minix3.org/doku.php?id=developersguide:start">
+Developers Guide</a>&nbsp;&nbsp;
+<a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi">
+Kernel API</a></h3>
+
+<h3>Where the system call is defined or called</h3>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#">Sample</a></h4>
+
+
+<P><b>Note: (03/30/2012) (08/12/2011)</b> Quite a few of the fallowing system calls 
+aren't documented, yet.  All the file paths are relative to the <code>/usr/src</code> 
+directory.
+
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_endksig">SYS_ENDKSIG</a></h4>
+
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_exec">SYS_EXEC</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./kernel/system/do_exec.c
+./lib/libsys/Makefile
+./lib/libsys/sys_exec.c
+./servers/pm/exec.c
+</PRE>
+
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_exit">SYS_EXIT</a></h4>
+
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_fork">SYS_FORK</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./kernel/system/do_fork.c
+./lib/libsys/Makefile
+./lib/libsys/sys_fork.c
+./servers/pm/forkexit.c
+./servers/vm/fork.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_clear">SYS_CLEAR</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./kernel/system/do_clear.c
+./lib/libsys/Makefile
+./lib/libsys/sys_clear.c
+./servers/pm/forkexit.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_schedule">SYS_SCHEDULE</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/sys_schedule.c
+./servers/sched/schedule.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_privctl">SYS_PRIVCTL</a></h4>
+<PRE>
+./drivers/acpi/acpi.c
+./drivers/pci/pci.c
+./include/minix/com.h
+./include/minix/syslib.h
+./kernel/system/do_privctl.c
+./lib/libsys/Makefile
+./lib/libsys/sys_privctl.c
+./servers/rs/main.c
+./servers/rs/manager.c
+./servers/rs/request.c
+./servers/rs/utility.c
+./test/safemap/grantor.c
+./test/safemap/requestor.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_trace">SYS_TRACE</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./kernel/system/do_trace.c
+./lib/libsys/Makefile
+./lib/libsys/sys_trace.c
+./servers/pm/trace.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_kill">SYS_KILL</a></h4>
+<PRE>
+./drivers/tty/keyboard.c
+./drivers/tty/tty.c
+./include/minix/com.h
+./include/minix/syslib.h
+./kernel/system/do_kill.c
+./lib/libsys/Makefile
+./lib/libsys/sys_kill.c
+./servers/pm/exec.c
+./servers/pm/forkexit.c
+./servers/pm/signal.c
+./servers/rs/manager.c
+./servers/vfs/pipe.c
+./servers/vm/pagefaults.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_getsig">SYS_GETSIG</a></h4>
+<PRE>
+./include/minix/com.h
+./lib/libsys/Makefile
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_endsig">SYS_ENDSIG</a></h4>
+<PRE>
+./include/minix/com.h
+./lib/libsys/Makefile
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_sigsend">SYS_SIGSEND</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./include/minix/type.h
+./kernel/system/do_sigsend.c
+./lib/libsys/Makefile
+./lib/libsys/sys_sigsend.c
+./servers/pm/signal.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_sigreturn">SYS_SIGRETURN</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./kernel/config.h
+./kernel/system/do_sigreturn.c
+./lib/libsys/Makefile
+./lib/libsys/sys_sigreturn.c
+./servers/pm/signal.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_newmap">SYS_NEWMAP</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./kernel/system/do_newmap.c
+./lib/libsys/Makefile
+./lib/libsys/sys_newmap.c
+./servers/vm/exec.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_nice">SYS_NICE</a></h4>
+
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_memset">SYS_MEMSET</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./kernel/system/do_memset.c
+./lib/libsys/Makefile
+./lib/libsys/sys_memset.c
+./servers/vm/alloc.c
+</PRE>
+
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_safememset">SYS_SAFEMEMSET</a></h4>
+
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_umap">SYS_UMAP</a></h4>
+<PRE>
+./drivers/ahci/ahci.c
+./drivers/amddev/amddev.c
+./drivers/at_wini/at_wini.c
+./drivers/dec21140A/dec21140A.c
+./drivers/fxp/fxp.c
+./drivers/lance/lance.c
+./drivers/rtl8139/rtl8139.c
+./include/minix/com.h
+./include/minix/syslib.h
+./kernel/config.h
+./lib/libaudiodriver/audio_fw.c
+./lib/libsys/Makefile
+./lib/libsys/alloc_util.c
+./lib/libsys/sys_umap.c
+./lib/libsys/sys_umap_remote.c
+./lib/libvassert/vassert.c
+./servers/pm/profile.c
+./servers/vm/arch/i386/pagetable.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_vircopy">SYS_VIRCOPY</a></h4>
+<PRE>
+./drivers/dpeth/8390.c
+./drivers/printer/printer.c
+./include/minix/com.h
+./include/minix/syslib.h
+./kernel/system/do_copy.c
+./kernel/system/do_trace.c
+./lib/libsys/Makefile
+./lib/libsys/sys_vircopy.c
+./servers/pm/misc.c
+./servers/pm/trace.c
+./servers/rs/exec.c
+./servers/rs/request.c
+./servers/vfs/coredump.c
+./servers/vfs/dmap.c
+./servers/vfs/exec.c
+./servers/vfs/request.c
+./servers/vfs/select.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_physcopy">SYS_PHYSCOPY</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./kernel/system/do_copy.c
+./lib/libsys/Makefile
+./lib/libsys/sys_physcopy.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_umap_remote">SYS_UMAP_REMOTE</a></h4>
+<PRE>
+./drivers/amddev/amddev.c
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/sys_umap_remote.c
+./servers/pm/profile.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_irqctl">SYS_IRQCTL</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/sys_irqctl.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_int86">SYS_INT86</a></h4>
+<PRE>
+./drivers/bios_wini/bios_wini.c
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/sys_int86.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_devio">SYS_DEVIO</a></h4>
+<PRE>
+./include/minix/com.h
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_sdevio">SYS_SDEVIO</a></h4>
+<PRE>
+./drivers/dp8390/dp8390.c
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/sys_sdevio.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_vdevio">SYS_VDEVIO</a></h4>
+<PRE>
+./include/minix/com.h
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_setalarm">SYS_SETALARM</a></h4>
+<PRE>
+./drivers/at_wini/at_wini.c
+./drivers/filter/util.c
+./drivers/orinoco/orinoco.c
+./drivers/random/main.c
+./drivers/rtl8139/rtl8139.c
+./drivers/rtl8169/rtl8169.c
+./drivers/vbox/vbox.c
+./include/minix/com.h
+./include/minix/syslib.h
+./kernel/clock.c
+./lib/libddekit/src/timer.c
+./lib/libsys/Makefile
+./lib/libsys/sys_setalarm.c
+./lib/libsys/timers.c
+./servers/inet/clock.c
+./servers/rs/main.c
+./servers/rs/request.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_times">SYS_TIMES</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./kernel/system/do_times.c
+./lib/libsys/Makefile
+./lib/libsys/sef.c
+./lib/libsys/sys_times.c
+./servers/pm/forkexit.c
+./servers/pm/time.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_getinfo">SYS_GETINFO</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/sef.c
+./lib/libsys/sys_getinfo.c
+./lib/libsys/sys_hz.c
+./servers/rs/main.c
+</PRE>
+
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_getksig">SYS_GETKSIG</a></h4>
+
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_iopenable">SYS_IOPENABLE</a></h4>
+
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_abort">SYS_ABORT</a></h4>
+<PRE>
+./drivers/tty/keyboard.c
+./include/minix/com.h
+./include/minix/syslib.h
+./kernel/system/do_abort.c
+./lib/libsys/Makefile
+./lib/libsys/sys_abort.c
+./man/man2/reboot.2
+./servers/pm/main.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_enable_iop">SYS_ENABLE_IOP</a></h4>
+<PRE>
+./drivers/memory/memory.c
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/sys_eniop.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_safecopyfrom">SYS_SAFECOPYFROM</a></h4>
+<PRE>
+./drivers/ahci/ahci.c
+./drivers/at_wini/at_wini.c
+./drivers/atl2/atl2.c
+./drivers/bios_wini/bios_wini.c
+./drivers/dec21140A/dec21140A.c
+./drivers/dp8390/dp8390.c
+./drivers/dpeth/8390.c
+./drivers/dpeth/dp.c
+./drivers/dpeth/netbuff.c
+./drivers/e1000/e1000.c
+./drivers/fbd/rule.c
+./drivers/filter/main.c
+./drivers/floppy/floppy.c
+./drivers/fxp/fxp.c
+./drivers/lance/lance.c
+./drivers/log/log.c
+./drivers/memory/memory.c
+./drivers/orinoco/orinoco.c
+./drivers/pci/main.c
+./drivers/pci/pci.c
+./drivers/printer/printer.c
+./drivers/random/main.c
+./drivers/rtl8139/rtl8139.c
+./drivers/rtl8169/rtl8169.c
+./drivers/tty/console.c
+./drivers/tty/keyboard.c
+./drivers/tty/pty.c
+./drivers/tty/rs232.c
+./drivers/tty/tty.c
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libaudiodriver/audio_fw.c
+./lib/libblockdriver/driver.c
+./lib/libblockdriver/trace.c
+./lib/libchardriver/chardriver.c
+./lib/libddekit/src/usb_server.c
+./lib/libminixfs/fetch_credentials.c
+./lib/libpuffs/link.c
+./lib/libpuffs/open.c
+./lib/libpuffs/path.c
+./lib/libpuffs/read.c
+./lib/libsys/sys_safecopy.c
+./lib/libvtreefs/path.c
+./servers/devman/device.c
+./servers/ds/store.c
+./servers/ext2/link.c
+./servers/ext2/misc.c
+./servers/ext2/mount.c
+./servers/ext2/open.c
+./servers/ext2/path.c
+./servers/ext2/read.c
+./servers/hgfs/lookup.c
+./servers/hgfs/util.c
+./servers/hgfs/write.c
+./servers/inet/sr.c
+./servers/iso9660fs/misc.c
+./servers/iso9660fs/mount.c
+./servers/iso9660fs/path.c
+./servers/lwip/proto.h
+./servers/mfs/link.c
+./servers/mfs/misc.c
+./servers/mfs/mount.c
+./servers/mfs/open.c
+./servers/mfs/path.c
+./servers/mfs/read.c
+./servers/pfs/read.c
+./servers/pfs/uds.c
+./servers/vfs/main.c
+./servers/vfs/path.c
+./servers/vm/main.c
+./test/safecopy/requestor.c
+./test/safeperf/requestor.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_safecopyto">SYS_SAFECOPYTO</a></h4>
+<PRE>
+./drivers/ahci/ahci.c
+./drivers/at_wini/at_wini.c
+./drivers/atl2/atl2.c
+./drivers/bios_wini/bios_wini.c
+./drivers/dec21140A/dec21140A.c
+./drivers/dp8390/dp8390.c
+./drivers/dpeth/dp.c
+./drivers/dpeth/netbuff.c
+./drivers/e1000/e1000.c
+./drivers/fbd/rule.c
+./drivers/filter/main.c
+./drivers/floppy/floppy.c
+./drivers/fxp/fxp.c
+./drivers/hello/hello.c
+./drivers/lance/lance.c
+./drivers/log/log.c
+./drivers/memory/memory.c
+./drivers/orinoco/orinoco.c
+./drivers/pci/main.c
+./drivers/random/main.c
+./drivers/rtl8139/rtl8139.c
+./drivers/rtl8169/rtl8169.c
+./drivers/tty/console.c
+./drivers/tty/keyboard.c
+./drivers/tty/pty.c
+./drivers/tty/tty.c
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libaudiodriver/audio_fw.c
+./lib/libblockdriver/driver.c
+./lib/libblockdriver/trace.c
+./lib/libchardriver/chardriver.c
+./lib/libddekit/src/usb_server.c
+./lib/libpuffs/link.c
+./lib/libpuffs/path.c
+./lib/libpuffs/read.c
+./lib/libpuffs/stadir.c
+./lib/libsys/gcov.c
+./lib/libsys/sys_safecopy.c
+./lib/libvtreefs/link.c
+./lib/libvtreefs/path.c
+./lib/libvtreefs/read.c
+./lib/libvtreefs/stadir.c
+./servers/ds/store.c
+./servers/ext2/link.c
+./servers/ext2/path.c
+./servers/ext2/read.c
+./servers/ext2/stadir.c
+./servers/hgfs/misc.c
+./servers/hgfs/read.c
+./servers/hgfs/stat.c
+./servers/inet/sr.c
+./servers/iso9660fs/read.c
+./servers/iso9660fs/stadir.c
+./servers/lwip/proto.h
+./servers/mfs/link.c
+./servers/mfs/path.c
+./servers/mfs/read.c
+./servers/mfs/stadir.c
+./servers/pfs/read.c
+./servers/pfs/stadir.c
+./servers/pfs/uds.c
+./servers/vfs/path.c
+./test/safemap/requestor.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_vsafecopy">SYS_VSAFECOPY</a></h4>
+<PRE>
+./drivers/fbd/fbd.c
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/sys_vsafecopy.c
+./servers/inet/sr.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_setgrant">SYS_SETGRANT</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/safecopies.c
+./lib/libsys/sys_setgrant.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_readbios">SYS_READBIOS</a></h4>
+<PRE>
+./drivers/at_wini/at_wini.c
+./drivers/readclock/readclock.c
+./drivers/tty/console.c
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/sys_readbios.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_sprof">SYS_SPROF</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/sys_sprof.c
+./servers/pm/profile.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_cprof">SYS_CPROF</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/sys_cprof.c
+./servers/pm/profile.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_profbuf">SYS_PROFBUF</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/profile.c
+./lib/libsys/profile_extern.c
+./lib/libsys/sys_profbuf.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_stime">SYS_STIME</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/sys_stime.c
+./servers/pm/time.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_vmctl">SYS_VMCTL</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/sys_vmctl.c
+./servers/vm/arch/i386/pagetable.c
+./servers/vm/main.c
+./servers/vm/pagefaults.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_sysctl">SYS_SYSCTL</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/kputc.c
+./lib/libsys/sys_sysctl.c
+./servers/is/dmp_kernel.c
+./servers/pm/misc.c
+./servers/pm/signal.c
+./servers/rs/main.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_vtimer">SYS_VTIMER</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/sys_vtimer.c
+./servers/pm/alarm.c
+</PRE>
+
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_vumap">SYS_VUMAP</a></h4>
+
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_runctl">SYS_RUNCTL</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/sys_runctl.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_safemap">SYS_SAFEMAP</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/ds.c
+./lib/libsys/sys_safemap.c
+./servers/ds/store.c
+./test/safemap/requestor.c
+./test/safeperf/requestor.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_saferevmap">SYS_SAFEREVMAP</a></h4>
+<PRE>
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_safeunmap">SYS_SAFEUNMAP</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/sys_safemap.c
+./servers/ds/store.c
+./test/safemap/requestor.c
+./test/safeperf/requestor.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_getmcontext">SYS_GETMCONTEXT</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/sys_mcontext.c
+./servers/pm/mcontext.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_setmcontext">SYS_SETMCONTEXT</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/sys_mcontext.c
+./servers/pm/mcontext.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_update">SYS_UPDATE</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./kernel/system/do_update.c
+./lib/libsys/Makefile
+./lib/libsys/sys_update.c
+./servers/rs/manager.c
+./servers/vm/rs.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_exit">SYS_EXIT</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./kernel/system/do_exit.c
+./lib/libsys/Makefile
+./lib/libsys/sef.c
+./lib/libsys/sys_exit.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_schedctl">SYS_SCHEDCTL</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./lib/libsys/Makefile
+./lib/libsys/sched_start.c
+./lib/libsys/sys_schedctl.c
+./servers/sched/schedule.c
+</PRE>
+<h4><a href="http://wiki.minix3.org/doku.php?id=developersguide:kernelapi#sys_statectl">SYS_STATECTL</a></h4>
+<PRE>
+./include/minix/com.h
+./include/minix/syslib.h
+./kernel/system/do_statectl.c
+./lib/libblockdriver/driver.c
+./lib/libchardriver/chardriver.c
+./lib/libsys/Makefile
+./lib/libsys/sys_statectl.c
+</PRE>

@@ -1,0 +1,93 @@
+#! /bin/bash
+
+echo "Get rid of Old Image files!"
+rm -rf *.img.gz
+
+cp ../LinuxMint/LinuxMint-Lisa.img ../DebSqz-test.img ../Hurd/Deb-Hurd-L1.img ../Ubuntu.img ../Debian-sqz.img ../minix3.2.img ../Resize/Debian-Gparted.img ../Resize/Debian-Mini.img ../Resize/Deb-Virtio.img . 
+
+echo "Gzip LinuxMint-Lisa.img, 8 more to go"
+gzip LinuxMint-Lisa.img
+echo "Gzip DebSqz-test.img, 7 more to go"
+gzip DebSqz-test.img
+echo "Gzip Deb-Hurd-L1.img, 6 more to go"
+gzip Deb-Hurd-L1.img
+echo "Gzip Ubuntu.img, 5 more to go"
+gzip Ubuntu.img
+echo "Gzip Debian-sqz.img, 4 more to go"
+gzip Debian-sqz.img
+echo "Gzip minix3.2.img, 3 more to go"
+gzip minix3.2.img
+echo "Gzip Debian-Gparted.img, 2 more to go"
+gzip Debian-Gparted.img
+echo "Gzip Debian-Mini.img, 1 more to go"
+gzip Debian-Mini.img
+echo "Gzip Deb-Virtio.img, 0 more to go"
+gzip Deb-Virtio.img
+sync; sync
+
+echo "Produce README.html"
+
+# The Contents of README.html is inscribed inside the two HereDoc keywords.
+
+GenReadme()
+{
+cat <<HereDoc
+<PRE>
+date: `date` 
+</PRE>
+
+<P> <b>GetImgsAndGzip</b> needs more than 45 minutes to finish! Use the 
+<b>Config-Kvm*</b> scripts to generate start and stop VM scripts.
+
+
+<OL>
+  <LI>Deb-Hurd-L1.img
+
+  <P>Kvm root filesystem for Debian/Hurd
+
+  <LI>Debian-Gparted.img
+
+  <P>Kvm root filesystem for Gparted VM.  We need to add one more Shell 
+     Script <code>start-Gparted-*-resizing</code> for carrying the to be 
+     resized Image File as /dev/sdb.
+
+
+<PRE>
+ $ diff ../bin/start-Gparted-6-resizing ../bin/start-Gparted-6
+ `diff ../bin/start-Gparted-6-resizing ../bin/start-Gparted-6`
+</PRE>
+
+  <LI>Debian-Mini.img
+
+  <P>Kvm root filesystem for Minimal Debian VM
+
+  <LI>Debian-sqz.img
+
+  <P>Kvm root filesystem for Debian Desktop
+
+  <LI>DebSqz-test.img
+
+  <P>Kvm root filesystem for Testing Debian Desktop
+
+  <LI>Deb-Virtio.img
+
+  <P>Kvm root filesystem for Virtual IO (kvm kernel module)
+
+  <LI>LinuxMint-Lisa.img
+
+  <P>Kvm root filesystem for LinuxMint 14 Nadia
+
+  <LI>minix3.2.img
+
+  <P>Kvm root filesystem for Minix 3
+
+  <LI>Ubuntu.img
+
+  <P>Kvm root filesystem for Ubuntu 12.10
+</OL>
+HereDoc
+}
+
+GenReadme | tee README.html
+
+

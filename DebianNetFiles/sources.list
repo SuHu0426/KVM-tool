@@ -1,0 +1,4 @@
+deb http://140.120.7.21/debian jessie main contrib
+deb http://140.120.7.21/debian sid main contrib
+deb http://security.debian.org/ jessie/updates main contrib
+# deb-src http://ftp.tw.debian.org/debian/ jessie main

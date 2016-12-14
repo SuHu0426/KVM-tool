@@ -1,0 +1,2057 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html><head><title>XDM-Xterm</title>
+      </head>
+      <body>
+<h2>XDM-Xterm
+<a href="http://linux.com/learn/docs/ldp/827-xdm-xterm">(Source Origin)</a>
+</h2>
+<div class="article-meta">
+<span class="createdate">Monday, 13 April 2009 07:43</span>
+</div>
+
+
+<h2><a name="AEN2" id="AEN2">XDM and X Terminal mini-HOWTO</a>
+</h2>
+<h4 class="AUTHOR">
+<a name="AEN2" id="AEN2"></a><a name="AEN4" id="AEN4">Kevin
+Taylor</a>
+</h4>
+<div class="AFFILIATION">
+<div class="ADDRESS">
+<p class="ADDRESS">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ <script language="JavaScript" type="text/javascript">
+ <!--
+ var prefix = '&#109;a' + 'i&#108;' + '&#116;o';
+ var path = 'hr' + 'ef' + '=';
+ var addy18965 = 'k&#101;v&#105;n' + '&#64;';
+ addy18965 = addy18965 + 'n&#111;rth&#97;nts' + '&#46;' + 'l&#117;g' + '&#46;' + '&#111;rg' + '&#46;' + '&#117;k';
+ document.write( '<a ' + path + '\'' + prefix + ':' + addy18965 + '\'>' );
+ document.write( addy18965 );
+ document.write( '<\/a>' );
+ //-->\n </script><a href="mailto:kevin@northants.lug.org.uk">kevin@northants.lug.org.uk</a> <script language="JavaScript" type="text/javascript">
+ <!--
+ document.write( '<span style=\'display: none;\'>' );
+ //-->
+ </script><span style="display: none;">This e-mail address is being protected from spambots. You need JavaScript enabled to view it
+ <script language="JavaScript" type="text/javascript">
+ <!--
+ document.write( '</' );
+ document.write( 'span>' );
+ //-->
+ </script></span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</p>
+</div>
+</div>
+<div class="REVHISTORY">
+<table border="0" width="100%">
+<tbody><tr>
+<th colspan="3" align="left" valign="top">
+<b>Revision History</b>
+</th>
+</tr>
+<tr>
+<td align="left">
+Revision v1.00
+</td>
+<td align="left">
+2002-05-16
+</td>
+<td align="left">
+Revised by: KT
+</td>
+</tr>
+<tr>
+<td colspan="3" align="left">
+Minor updates to all sections. Added details of Windows/Linux
+interoperability. Added section on starting XDM. Added details of
+KDM and GDM. Added new software resources.
+</td>
+</tr>
+<tr>
+<td align="left">
+Revision v0.05
+</td>
+<td align="left">
+14 November 2000
+</td>
+<td align="left">
+Revised by: KT
+</td>
+</tr>
+<tr>
+<td colspan="3" align="left">
+Added cross-references to other Howtos
+</td>
+</tr>
+<tr>
+<td align="left">
+Revision v0.04
+</td>
+<td align="left">
+6 November 2000
+</td>
+<td align="left">
+Revised by: KT
+</td>
+</tr>
+<tr>
+<td colspan="3" align="left">
+Updates after first public draft.
+</td>
+</tr>
+<tr>
+<td align="left">
+Revision v0.03
+</td>
+<td align="left">
+3 July 2000
+</td>
+<td align="left">
+Revised by: KT
+</td>
+</tr>
+<tr>
+<td colspan="3" align="left">
+Minor updates from first comments
+</td>
+</tr>
+<tr>
+<td align="left">
+Revision v0.02
+</td>
+<td align="left">
+28 June 2000
+</td>
+<td align="left">
+Revised by: KT
+</td>
+</tr>
+<tr>
+<td colspan="3" align="left">
+First SGML source draft from HTML source
+</td>
+</tr>
+<tr>
+<td align="left">
+Revision v0.01
+</td>
+<td align="left">
+27 June 2000
+</td>
+<td align="left">
+Revised by: KT
+</td>
+</tr>
+<tr>
+<td colspan="3" align="left">
+First HTML source draft
+</td>
+</tr>
+</tbody></table>
+</div>
+<div>
+<div class="ABSTRACT">
+<a name="AEN41" id="AEN41"></a>
+<p>
+This document describes the basic ideas for using XDM to manage X
+terminals. It is not meant to be a comprehensive discussion of all
+the features of XDM, but a gentle introduction to what XDM can do.
+</p>
+<p>
+For a full discussion about the installation and configuration of X
+terminals, please refer to the 'Thin-client' HOWTO, from the Linux
+Documentation Project or the Linux Terminal Server Project (see
+<a href="#RESOURCES">Section 7</a>).
+</p>
+</div>
+</div>
+<hr>
+</div>
+<div class="TOC">
+<dl>
+<dt>
+<b>Table of Contents</b>
+</dt>
+<dt>
+1. <a href="#INTRO">Introduction</a>
+</dt>
+<dd>
+<dl>
+<dt>
+1.1. <a href="#COPYRIGHT">Copyright Information</a>
+</dt>
+<dt>
+1.2. <a href="#DISCLAIMER">Disclaimer</a>
+</dt>
+<dt>
+1.3. <a href="#NEWVERSIONS">New Versions</a>
+</dt>
+<dt>
+1.4. <a href="#CREDITS">Credits</a>
+</dt>
+<dt>
+1.5. <a href="#FEEDBACK">Feedback</a>
+</dt>
+<dt>
+1.6. <a href="#TODO">To do</a>
+</dt>
+</dl>
+</dd>
+<dt>
+2. <a href="#BASICS">Basic Concepts</a>
+</dt>
+<dd>
+<dl>
+<dt>
+2.1. <a href="#COVERAGE">What is covered</a>
+</dt>
+<dt>
+2.2. <a href="#ABOUT">About this document</a>
+</dt>
+</dl>
+</dd>
+<dt>
+3. <a href="#XDM">XDM</a>
+</dt>
+<dd>
+<dl>
+<dt>
+3.1. <a href="#XDM-WHAT">What is XDM</a>
+</dt>
+<dt>
+3.2. <a href="#XDM-XTERM">What is an X terminal</a>
+</dt>
+<dt>
+3.3. <a href="#XDM-TERMS">Some Terminology</a>
+</dt>
+<dt>
+3.4. <a href="#XDM-DO">What can XDM do</a>
+</dt>
+</dl>
+</dd>
+<dt>
+4. <a href="#CONFIG">Configuring XDM</a>
+</dt>
+<dd>
+<dl>
+<dt>
+4.1. <a href="#CONFIG-FILES">Configuration Files</a>
+</dt>
+<dt>
+4.2. <a href="#XDM-XSERV">Configuring XDM to Manage X Servers</a>
+</dt>
+<dt>
+4.3. <a href="#XDM-QUERIES">Configuring XDM to Receive Queries</a>
+</dt>
+<dt>
+4.4. <a href="#XDM-STARTX">Starting X</a>
+</dt>
+<dt>
+4.5. <a href="#XDM-STARTUP">Starting XDM</a>
+</dt>
+<dt>
+4.6. <a href="#XDM-CHOOSER">The Chooser Application</a>
+</dt>
+<dt>
+4.7. <a href="#XDM-ALTERNATIVES">Alternatives to XDM</a>
+</dt>
+</dl>
+</dd>
+<dt>
+5. <a href="#XDM-ADVCONFIG">Advanced Configuration Options</a>
+</dt>
+<dd>
+<dl>
+<dt>
+5.1. <a href="#ADV-CONFIGSETS">Configuration Sets</a>
+</dt>
+<dt>
+5.2. <a href="#X-RESOURCES">X Resources</a>
+</dt>
+</dl>
+</dd>
+<dt>
+6. <a href="#COMMON-CONFIGS">Common Configurations</a>
+</dt>
+<dd>
+<dl>
+<dt>
+6.1. <a href="#CFGS-LINUX">Linux to Linux</a>
+</dt>
+<dt>
+6.2. <a href="#CFGS-TOOTHER">Linux to Other Systems</a>
+</dt>
+<dt>
+6.3. <a href="#CFGS-TOLINUX">Other Systems to Linux</a>
+</dt>
+</dl>
+</dd>
+<dt>
+7. <a href="#RESOURCES">Resources</a>
+</dt>
+</dl>
+</div>
+<div class="SECT1">
+<h2 class="SECT1">
+<a name="INTRO" id="INTRO">1. Introduction</a>
+</h2>
+<div class="SECT2">
+<a name="INTRO" id="INTRO"></a>
+<hr>
+<h3 class="SECT2">
+<a name="COPYRIGHT" id="COPYRIGHT">1.1. Copyright Information</a>
+</h3>
+<p>
+<a name="COPYRIGHT" id="COPYRIGHT">This document is copyrighted (c)
+2000-2002 Kevin Taylor and is distributed under the terms of the
+Linux Documentation Project (LDP) license, stated below.</a>
+</p><a name="COPYRIGHT" id="COPYRIGHT"></a>
+<p>
+Unless otherwise stated, Linux HOWTO documents are copyrighted by
+their respective authors. Linux HOWTO documents may be reproduced
+and distributed in whole or in part, in any medium physical or
+electronic, as long as this copyright notice is retained on all
+copies. Commercial redistribution is allowed and encouraged;
+however, the author would like to be notified of any such
+distributions.
+</p>
+<p>
+All translations, derivative works, or aggregate works
+incorporating any Linux HOWTO documents must be covered under this
+copyright notice. That is, you may not produce a derivative work
+from a HOWTO and impose additional restrictions on its
+distribution. Exceptions to these rules may be granted under
+certain conditions; please contact the Linux HOWTO coordinator at
+the address given below.
+</p>
+<p>
+In short, we wish to promote dissemination of this information
+through as many channels as possible. However, we do wish to retain
+copyright on the HOWTO documents, and would like to be notified of
+any plans to redistribute the HOWTOs.
+</p>
+<p>
+If you have any questions, please contact <tt class="EMAIL">&lt;
+ <script language="JavaScript" type="text/javascript">
+ <!--
+ var prefix = '&#109;a' + 'i&#108;' + '&#116;o';
+ var path = 'hr' + 'ef' + '=';
+ var addy72961 = 'l&#105;n&#117;x-h&#111;wt&#111;' + '&#64;';
+ addy72961 = addy72961 + 'm&#101;t&#97;l&#97;b' + '&#46;' + '&#117;nc' + '&#46;' + '&#101;d&#117;';
+ var addy_text72961 = 'l&#105;n&#117;x-h&#111;wt&#111;' + '&#64;' + 'm&#101;t&#97;l&#97;b' + '&#46;' + '&#117;nc' + '&#46;' + '&#101;d&#117;';
+ document.write( '<a ' + path + '\'' + prefix + ':' + addy72961 + '\'>' );
+ document.write( addy_text72961 );
+ document.write( '<\/a>' );
+ //-->\n </script><a href="mailto:linux-howto@metalab.unc.edu">linux-howto@metalab.unc.edu</a> <script language="JavaScript" type="text/javascript">
+ <!--
+ document.write( '<span style=\'display: none;\'>' );
+ //-->
+ </script><span style="display: none;">This e-mail address is being protected from spambots. You need JavaScript enabled to view it
+ <script language="JavaScript" type="text/javascript">
+ <!--
+ document.write( '</' );
+ document.write( 'span>' );
+ //-->
+ </script></span>&gt;</tt>
+</p>
+</div>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="DISCLAIMER" id="DISCLAIMER">1.2. Disclaimer</a>
+</h3>
+<p>
+<a name="DISCLAIMER" id="DISCLAIMER">No liability for the contents
+of this documents can be accepted. Use the concepts, examples and
+other content at your own risk. As this is a new edition of this
+document, there may be errors and inaccuracies, that may of course
+be damaging to your system. Proceed with caution, and although this
+is highly unlikely, the author(s) do not take any responsibility
+for that.</a>
+</p><a name="DISCLAIMER" id="DISCLAIMER"></a>
+<p>
+All copyrights are held by their by their respective owners, unless
+specifically noted otherwise. Use of a term in this document should
+not be regarded as affecting the validity of any trademark or
+service mark.
+</p>
+<p>
+Naming of particular products or brands should not be seen as
+endorsements.
+</p>
+<p>
+You are strongly recommended to take a backup of your system before
+major installation and backups at regular intervals.
+</p>
+</div>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="NEWVERSIONS" id="NEWVERSIONS">1.3. New Versions</a>
+</h3>
+<p>
+<a name="NEWVERSIONS" id="NEWVERSIONS">The latest version number of
+this document may be obtained from</a> <a href="http://www.northants.lug.org.uk/projects/xdm-mini/" target="_top">The Northants LUG, UK Project Pages</a> .
+</p>
+</div>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="CREDITS" id="CREDITS">1.4. Credits</a>
+</h3>
+<p>
+<a name="CREDITS" id="CREDITS">Thanks go to the following people
+for help with information and proof reading of the document.</a>
+</p><a name="CREDITS" id="CREDITS"></a>
+<p>
+Scot W Stevenson for the original X terminal mini-howto document,
+from 1995, on which some of the material for the section on
+advanced xdm-config configurations was obtained.
+</p>
+<p>
+Members of the Northants LUG, UK for proof reading the document.
+</p>
+<p>
+The writers of the XDM, Xserver man pages and the default XDM
+scripts.
+</p>
+<div class="VARIABLELIST">
+<dl>
+<dt>
+Credits for 0.05
+</dt>
+<dd>
+<p>
+Everyone who commented on the earlier versions, including Neil
+Zanella, Rafael Herrera, Paul Hornshaw, Clive Jones, Robert de
+Geus, Alex Schenkman, Richard Kaszeta, Malcolm Herbet
+</p>
+</dd>
+<dt>
+Credits for 1.00
+</dt>
+<dd>
+<p>
+The following people provided feedback and comments which have led
+up to the 1.00 release: Alan James, Stephen Eglen, Malcolm Hunter,
+Holgar Hoffman, Patrick Rynhart, Amedeo Lanza, Alexander Skopalik,
+Mike Banahan.
+</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="FEEDBACK" id="FEEDBACK">1.5. Feedback</a>
+</h3>
+<p>
+<a name="FEEDBACK" id="FEEDBACK">Feedback is most certainly welcome
+for this document. Without your submissions and input, this
+document wouldn't exist. Please send your additions, comments and
+criticisms to the following email address: <tt class="EMAIL">&lt;</tt></a>
+ <script language="JavaScript" type="text/javascript">
+ <!--
+ var prefix = '&#109;a' + 'i&#108;' + '&#116;o';
+ var path = 'hr' + 'ef' + '=';
+ var addy92794 = 'xdm-m&#105;n&#105;' + '&#64;';
+ addy92794 = addy92794 + 'n&#111;rth&#97;nts' + '&#46;' + 'l&#117;g' + '&#46;' + '&#111;rg' + '&#46;' + '&#117;k';
+ var addy_text92794 = 'xdm-m&#105;n&#105;' + '&#64;' + 'n&#111;rth&#97;nts' + '&#46;' + 'l&#117;g' + '&#46;' + '&#111;rg' + '&#46;' + '&#117;k';
+ document.write( '<a ' + path + '\'' + prefix + ':' + addy92794 + '\'>' );
+ document.write( addy_text92794 );
+ document.write( '<\/a>' );
+ //-->\n </script><a href="mailto:xdm-mini@northants.lug.org.uk">xdm-mini@northants.lug.org.uk</a> <script language="JavaScript" type="text/javascript">
+ <!--
+ document.write( '<span style=\'display: none;\'>' );
+ //-->
+ </script><span style="display: none;">This e-mail address is being protected from spambots. You need JavaScript enabled to view it
+ <script language="JavaScript" type="text/javascript">
+ <!--
+ document.write( '</' );
+ document.write( 'span>' );
+ //-->
+ </script></span>&gt;.
+</p>
+</div>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="TODO" id="TODO">1.6. To do</a>
+</h3>
+<p>
+<a name="TODO" id="TODO">I probably ought to mention some details
+about the following at some point ...</a>
+</p>
+<ul>
+<li>
+<p>
+Debugging problems with XDM.
+</p>
+</li>
+<li>
+<p>
+FAQs and common mistakes
+</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="SECT1">
+<hr>
+<h2 class="SECT1">
+<a name="BASICS" id="BASICS">2. Basic Concepts</a>
+</h2>
+<div class="SECT2">
+<a name="BASICS" id="BASICS"></a>
+<hr>
+<h3 class="SECT2">
+<a name="COVERAGE" id="COVERAGE">2.1. What is covered</a>
+</h3>
+<p>
+<a name="COVERAGE" id="COVERAGE">This document describes the basic
+concepts behind using XDM (the X Display Manager) to manage X
+terminals and X servers, in order to provide 'thin-client'
+computing, using Linux.</a>
+</p><a name="COVERAGE" id="COVERAGE"></a>
+<p>
+X (or the 'X Window System') is the windowing and graphics
+environment of choice for Unix systems. Its particular strength
+(and the key bit that we are interested in for this document) is
+that it separates the running applications (web browser, word
+processor, etc) from the actual graphics screen and input devices
+(mouse, keyboard, etc) via a network communications mechanism.
+</p>
+<p>
+Essentially, this means that you can be running an application on
+one machine, but have its input and output redirected to another
+machine via a network. This is the key feature that makes an X
+terminal possible.
+</p>
+<p>
+This document should be treated as a 'getting started with XDM'
+document, in that it describes the basic terms and concepts for
+using XDM and X terminals, with simple examples that provide the
+minimum amount of security.
+</p>
+<p>
+The reader is advised to consult the list of resources provided at
+the end of the document in order to proceed beyond these basic
+facilities - in particular, the configuration of the
+'authentication' and security settings should be examined, as the
+examples given in this document utilise the least secure modes of
+operation.
+</p>
+<p>
+Please note - the majority of the information in this document was
+obtained from systems running Debian 2.1, SuSE 6.4, Mandrake 7.0
+and RedHat 6.0.
+</p>
+<p>
+This document does not discuss the installation or configuration of
+a network or X on Linux. Please refer to the appropriate HOWTO
+documents from the Linux Documentation Project for details (see
+<a href="#RESOURCES">Section 7</a>).
+</p>
+<p>
+This document also does not attempt to describe how to install and
+configure Linux for operation as an X terminal. For this
+information, please refer to the 'thin-client' HOWTO document,
+provided as part of the Linux Documentation Project, or the Linux
+Terminal Server Project (see <a href="#RESOURCES">Section 7</a>).
+</p>
+</div>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="ABOUT" id="ABOUT">2.2. About this document</a>
+</h3>
+<p>
+<a name="ABOUT" id="ABOUT">This document came about because I
+wanted to experiment with Linux on a 486 PC as an X terminal to my
+main Linux box.</a>
+</p><a name="ABOUT" id="ABOUT"></a>
+<p>
+After reading the man pages, specifications and current howto
+documents relating to XDM and X terminals, I ended up getting
+really confused about where XDM was supposed to run and confusing
+XDM servers with X servers and the like, and so after an evening or
+two of experimentation, this document was born.
+</p>
+<p>
+Once the basic terminology has been sorted out, the documentation
+for XDM and self-documenting sample files make very good reading -
+I just could not find a simple introduction to the basic concepts
+anywhere to get me started. Hopefully this document could prove to
+be a suitable introduction to someone in a similar position to me.
+</p>
+<p>
+Oh, and in case you are wondering, a 486dx2/66 with 16 Mb RAM makes
+a fine X terminal!
+</p>
+</div>
+</div>
+<div class="SECT1">
+<hr>
+<h2 class="SECT1">
+<a name="XDM" id="XDM">3. XDM</a>
+</h2>
+<div class="SECT2">
+<a name="XDM" id="XDM"></a>
+<hr>
+<h3 class="SECT2">
+<a name="XDM-WHAT" id="XDM-WHAT">3.1. What is XDM</a>
+</h3>
+<p>
+<a name="XDM-WHAT" id="XDM-WHAT">Put simply, XDM (the X Display
+Manager) can be thought of as a graphical replacement for the
+command line 'login' prompt. In reality, it can actually do much
+more than that.</a>
+</p><a name="XDM-WHAT" id="XDM-WHAT"></a>
+<p>
+Typically, it would be started by the 'root' user (or the system
+startup scripts) on power up, and would present a user with a
+graphical login prompt. It will then manage the users X session
+once they login - i.e. it will initiate the running of their window
+manager and applications.
+</p>
+<p>
+This could be considered a typical 'simple local machine login'
+configuration, as may be found installed by many Linux
+distributions by default. However, XDM can also manage remote X
+servers and provide login prompts to remote 'X terminals'. In
+short, it is not limited to the local machine - it can easily
+manage other machines connected via a network.
+</p>
+<p>
+XDM is a very configurable utility and this document will only just
+'scratch the surface' of what may be achieved. This document aims
+to provide enough information to configure your X terminals and
+application servers to connect to each other. The reader is
+referred to <a href="#RESOURCES">Section 7</a> for further
+information on the topics discussed here.
+</p>
+<p>
+A note on security: X (in its default configuration) and XDMCP are
+not particularly secure. I am assuming that you are running X on a
+'trusted' network and that security is not an issue. For details of
+how to tighten up your X connections (and more details about using
+the networking capabilities of X) please refer to the 'Running
+Remote X Applications' Howto document, which is also part of the
+LDP (see <a href="#RESOURCES">Section 7</a>).
+</p>
+</div>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="XDM-XTERM" id="XDM-XTERM">3.2. What is an X terminal</a>
+</h3>
+<p>
+<a name="XDM-XTERM" id="XDM-XTERM">This term could be used to cover
+various configurations, but at its simplest, is a machine with a
+network connection, keyboard, mouse and monitor, configured to run
+the X Windows System to connect to an application server somewhere
+on the network.</a>
+</p><a name="XDM-XTERM" id="XDM-XTERM"></a>
+<p>
+There are several configurations of 'X terminal' with varying
+levels of functionality, ranging from completely diskless terminals
+to full X workstations.
+</p>
+</div>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="XDM-TERMS" id="XDM-TERMS">3.3. Some Terminology</a>
+</h3>
+<p>
+<a name="XDM-TERMS" id="XDM-TERMS">Before I go any further, I ought
+to explain the terms I will be using in this document. When talking
+about X, there is quite a lot of confusion over what is serving
+facilities to what. This is especially true when you are
+considering distributed sessions over a network involving X
+terminals. I will be using the terms described below.</a>
+</p><a name="XDM-TERMS" id="XDM-TERMS"></a>
+<div class="VARIABLELIST">
+<dl>
+<dt>
+Diskless X terminal
+</dt>
+<dd>
+<p>
+This would be a machine with no local disks, that would perform its
+boot up from an EPROM (or similar) and utilises a network
+connection to a server. It would obtain its network configuration,
+operating system, system configuration and all applications from
+the server. Once booted however, this would be the same as a 'dumb
+X terminal' (see below). Typically this configuration would use a
+combination of the following network protocols in order to boot:
+BOOTP, DHCP, TFTP, etc. Refer to <a href="#RESOURCES">Section 7</a>
+for some references that detail how to build diskless X terminals.
+</p>
+</dd>
+<dt>
+Dumb X terminal
+</dt>
+<dd>
+<p>
+This would be a machine that boots from its local disk into an
+operating system, and starts the 'X server' program and nothing
+more. Somehow, a login prompt would be provided on the machine, to
+enable a user to login to an 'application server' somewhere on the
+network.
+</p>
+</dd>
+<dt>
+X Workstation
+</dt>
+<dd>
+<p>
+This would be similar to a dumb X terminal, but would provide the
+option of logging on to the local machine itself, hence would be
+quite capable of becoming a standalone workstation (i.e. no network
+connectivity) if required. Most distributions can be configured
+'out of the box' as a stand-alone X Workstation, with a graphical
+login prompt.
+</p>
+</dd>
+<dt>
+Application Server
+</dt>
+<dd>
+<p>
+In the context of this document, I use the term 'application
+server' to describe a machine that will provide the applications (X
+clients) that our X terminal will want to run. This can include
+everything from editors and browsers, through to the actual 'Window
+Manager' itself.
+</p>
+</dd>
+<dt>
+X Server
+</dt>
+<dd>
+<p>
+This is the program that manages the display of a machine with a
+physical console (display, keyboard, mouse, etc). It can be thought
+of as a combined graphics card, keyboard and mouse 'driver'. This
+will provide these facilities as a service to X clients (hence the
+term 'server'). Please refer to the X User Howto in <a href="#RESOURCES">Section 7</a> for more details.
+</p>
+</dd>
+<dt>
+X Client
+</dt>
+<dd>
+<p>
+This is an application that requires the use of an X server to
+access input (keyboard and mouse) and output (display). An X client
+cannot produce output without the services of the X server. The X
+server could be running locally (on the same machine, as is the
+case with an X workstation) or elsewhere on the network (as is the
+case with an X terminal connecting to an Application Server).
+</p>
+</dd>
+</dl>
+</div>
+<p>
+From the above descriptions, an X Workstation could be thought of
+as consisting of a dumb X terminal and application server running
+on the same machine.
+</p>
+<p>
+This document will be looking at the architecture of the various
+options listed above and will describe the role that XDM can play
+in configuring them.
+</p>
+</div>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="XDM-DO" id="XDM-DO">3.4. What can XDM do</a>
+</h3>
+<p>
+<a name="XDM-DO" id="XDM-DO">XDM is responsible for providing the
+user with a login prompt and initiating their X session. It can
+manage local sessions (i.e. people logging into an X workstation)
+or sessions on remote machines, via a connection to an application
+server, from a diskless or dumb X terminal.</a>
+</p><a name="XDM-DO" id="XDM-DO"></a>
+<p>
+XDM would typically run on an application server, to permit users
+to logon and run applications from that server.
+</p>
+<p>
+There are 2 main ways that XDM can interact with an X Server:
+</p>
+<ul>
+<li>
+<p>
+XDM accepts queries from X server
+</p>
+</li>
+<li>
+<p>
+XDM manages X server
+</p>
+</li>
+</ul>
+<div class="SECT3">
+<hr>
+<h4 class="SECT3">
+<a name="XSERV-QUERY" id="XSERV-QUERY">3.4.1. XDM accepts queries
+from X Server</a>
+</h4>
+<p>
+<a name="XSERV-QUERY" id="XSERV-QUERY">The communications between
+XDM and the actual 'X server' (the machines with the physical
+screen/keyboard/mouse/etc) are handled via XDMCP the 'X Display
+Manager Control Protocol'.</a>
+</p><a name="XSERV-QUERY" id="XSERV-QUERY"></a>
+<p>
+This permits X servers to send out queries to servers running XDM.
+Effectively, the X server has to say 'I have someone wanting to
+login - please give me a login prompt'. In this mode of operation,
+XDM will not do anything unless it is asked to by your X server.
+</p>
+<p>
+The query from the X server can take one of 3 forms:
+</p>
+<ul>
+<li>
+<p>
+Direct query: the X server contacts a named host, requesting that
+XDM on that host presents a login prompt on its display.
+</p>
+</li>
+<li>
+<p>
+Broadcast: the X server sends out a broadcast message to the
+network, and the first server running XDM that responds to the
+broadcast will be the one to present the login prompt on its
+display.
+</p>
+</li>
+<li>
+<p>
+Indirect query: the X server contacts a named host, but asks it
+which other hosts it knows about on the network. The named host
+will then present the user with a list of hosts to choose from, and
+will then go on to initiate communications with the selected host
+resulting in the selected host presenting a login prompt on the X
+servers display.
+</p>
+</li>
+</ul>
+<p>
+There are several other options, but these will not be described
+here - refer to the XDM and XDMCP documentation in <a href="#RESOURCES">Section 7</a> for more details.
+</p>
+</div>
+<div class="SECT3">
+<hr>
+<h4 class="SECT3">
+<a name="XDM-SERVER" id="XDM-SERVER">3.4.2. XDM Manages X
+Server</a>
+</h4>
+<p>
+<a name="XDM-SERVER" id="XDM-SERVER">If you have a set of machines
+(e.g. diskless or dumb X terminals) that just end up running an X
+server, all designed to provide a login prompt to a single
+application server, then it is possible to configure XDM on the
+application server to connect back to each X server and present its
+login prompt on each display automatically.</a>
+</p><a name="XDM-SERVER" id="XDM-SERVER"></a>
+<p>
+In this mode of operation, XDM will actively 'push out' a login
+prompt to any listed X server that it knows about, without waiting
+for a query from the X servers themselves.
+</p>
+<p>
+In this case, the configuration file 'Xservers' (see later) lists
+each machine (including the local display, if required) to which
+XDM should connect, to display its login prompt.
+</p>
+<p>
+This configuration, when used with no remote X servers listed in
+the configuration, is the typical configuration used for a X
+workstation, in order to present a user with a graphical login to
+the local machine he is working on. As stated earlier, most
+distributions will support this configuration 'out of the box' in
+order to present the user with a local graphical login prompt.
+</p>
+<p>
+Note: XDM must be permitted to connect to the X servers in question
+- so the access control on the X servers must be configured
+accordingly.
+</p>
+</div>
+</div>
+</div>
+<div class="SECT1">
+<hr>
+<h2 class="SECT1">
+<a name="CONFIG" id="CONFIG">4. Configuring XDM</a>
+</h2>
+<p>
+<a name="CONFIG" id="CONFIG">This section covers what needs to be
+configured for XDM to perform the functions described so far in
+this document.</a>
+</p><a name="CONFIG" id="CONFIG"></a>
+<p>
+In each case, the configuration described is the minimum necessary
+to accomplish each goal. In most cases this means that the
+configuration is also the least secure. Please refer to some of the
+additional documentation listed in <a href="#RESOURCES">Section
+7</a> for information about securing XDM and X terminals (in
+particular the 'Running Remote X Applications Howto' from the LDP).
+</p>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="CONFIG-FILES" id="CONFIG-FILES">4.1. Configuration
+Files</a>
+</h3>
+<p>
+<a name="CONFIG-FILES" id="CONFIG-FILES">This describes the
+following scheme of XDM configuration files:</a>
+</p>
+<ul>
+<li>
+<p>
+xdm-config
+</p>
+</li>
+<li>
+<p>
+Xaccess
+</p>
+</li>
+<li>
+<p>
+Xservers
+</p>
+</li>
+<li>
+<p>
+Xresources
+</p>
+</li>
+</ul>
+<p>
+These must be setup for the machine actually running XDM itself.
+They will typically be found in (Debian 2.1. Mandrake 7.0.2, RedHat
+6.2):
+</p>
+<table bgcolor="#e0e0e0" border="1" width="100%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">      /etc/X11/xdm
+      </font>
+</pre>
+</td>
+</tr>
+</tbody></table>or (SuSE 6.4):
+<table bgcolor="#e0e0e0" border="1" width="100%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">      /usr/X11R6/lib/X11/xdm
+      </font>
+</pre>
+</td>
+</tr>
+</tbody></table>
+<div class="VARIABLELIST">
+<dl>
+<dt>
+xdm-config
+</dt>
+<dd>
+<p>
+Defines the names and locations of the other configuration files
+and the basic access permissions. For all distributions considered
+for this document, the file names were as listed here (but
+sometimes the locations varied).
+</p>
+<p>
+This also defines the scripts to be run for the various state
+transitions for an X session, i.e. on startup, etc. You should not
+need to change these, as most distributions would appear to come
+with this pre-configured for you.
+</p>
+<p>
+Note that XDM managed X sessions have a different set of startup
+and configuration scripts to X sessions started via xinit or startx
+(i.e. non-XDM managed X sessions).
+</p>
+<p>
+Some distributions (e.g. Redhat 7.1) include the following line in
+this configuration file, which will prevent XDM from listening for
+queries:
+</p>
+<table bgcolor="#e0e0e0" border="1" width="90%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">        DisplayManager.requestPort: 0
+        </font>
+</pre>
+</td>
+</tr>
+</tbody></table>This must be commented out as follows:
+<table bgcolor="#e0e0e0" border="1" width="90%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">        !DisplayManager.requestPort: 0
+        </font>
+</pre>
+</td>
+</tr>
+</tbody></table>
+</dd>
+<dt>
+Xaccess
+</dt>
+<dd>
+<p>
+Determines which machines can connect to XDM - i.e. from which
+other machines on the network we are accepting XDMCP queries. If a
+machine is not listed in this file, then it will not be able to
+request a login prompt from XDM.
+</p>
+</dd>
+<dt>
+Xservers
+</dt>
+<dd>
+<p>
+Contains a list of machines that XDM will connect to, to provide a
+login prompt, automatically - i.e. those machines already running
+an X server, but would like this machine to provide the login
+prompt.
+</p>
+<p>
+This is only required for 'XDM Managed X Servers'. You do not need
+any entries in this file if you will be relying on remote X servers
+to query XDM.
+</p>
+<p>
+When running as a stand-alone 'X Workstation', there is usually a
+single entry in this file, listing just the localhost.
+</p>
+</dd>
+<dt>
+Xresources
+</dt>
+<dd>
+<p>
+Details of the X properties used by the XDM widgets (e.g. size of
+the login 'box', colours, bitmap backgrounds, etc).
+</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="XDM-XSERV" id="XDM-XSERV">4.2. Configuring XDM to Manage X
+Servers</a>
+</h3>
+<p>
+<a name="XDM-XSERV" id="XDM-XSERV">An entry must be placed in the
+Xservers file for each X server that XDM will be presenting a login
+prompt on. This could include the local machine and/or a list of
+remote machines.</a>
+</p><a name="XDM-XSERV" id="XDM-XSERV"></a>
+<p>
+Example
+</p>
+<table bgcolor="#e0e0e0" border="1" width="100%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">      # First the local host
+      :0 local /usr/bin/X11/X vt7
+      #
+      # Then the remote hosts
+      emma:0 foreign
+      alex:0 foreign
+      </font>
+</pre>
+</td>
+</tr>
+</tbody></table>
+<p>
+This will start XDM on the local machine and also present a login
+screen on the X servers running on the hosts 'emma' and 'alex'
+(assuming that permissions have been setup on 'emma' and 'alex'
+such that this machine is permitted to connect to the running X
+servers).
+</p>
+<p>
+Note that it is possible to specify the host and display (:0, :1,
+etc) if required. This is useful, for example, if you are running
+multiple X servers on a single machine, etc.
+</p>
+</div>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="XDM-QUERIES" id="XDM-QUERIES">4.3. Configuring XDM to
+Receive Queries</a>
+</h3>
+<p>
+<a name="XDM-QUERIES" id="XDM-QUERIES">The file Xaccess determines
+which hosts may query XDM on this machine, in order to request a
+login prompt.</a>
+</p><a name="XDM-QUERIES" id="XDM-QUERIES"></a>
+<p>
+Example
+</p>
+<table bgcolor="#e0e0e0" border="1" width="100%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">      # First line for direct queries
+      *
+      # Following line for indirect queries
+      * CHOOSER BROADCAST
+      </font>
+</pre>
+</td>
+</tr>
+</tbody></table>
+<p>
+This means that any host may request a login prompt via XDM (the
+first '*') using a direct query.
+</p>
+<p>
+The 'CHOOSER' line specifies which hosts can connect to XDM using
+indirect queries - in this case, any host may query this machine
+for a list of potential hosts to connect to (the second '*' line).
+</p>
+<p>
+'BROADCAST' means that the 'chooser' application on this machine
+will obtain its list of available servers (that will also be
+running XDM) via network broadcast queries. I will talk about the
+'chooser' later.
+</p>
+<p>
+It is possible to place specific host names or specifications of
+network IP addresses (e.g. a whole IP network or specific hosts) in
+these entries (and there are also other indirect queries possible,
+without using the chooser) but this is not described here (refer to
+<a href="#RESOURCES">Section 7</a> for some links to more
+information).
+</p>
+</div>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="XDM-STARTX" id="XDM-STARTX">4.4. Starting X</a>
+</h3>
+<p>
+<a name="XDM-STARTX" id="XDM-STARTX">The way you start the X server
+itself, will depend upon how you want it to interact with XDM
+locally and remotely.</a>
+</p><a name="XDM-STARTX" id="XDM-STARTX"></a>
+<div class="VARIABLELIST">
+<dl>
+<dt>
+X Workstation: XDM and local X server
+</dt>
+<dd>
+<p>
+XDM will normally start X automatically for you and XDM will
+usually be configured to run as part of the startup process (via
+the init scripts). Most distributions have a specific 'run-level'
+for starting the system up with a graphical login prompt.
+</p>
+<p>
+The Xservers file would typically contain a single entry - that of
+the local host, and the Xaccess file would only need to permit
+access from the local host.
+</p>
+</dd>
+<dt>
+X Terminal: Remote XDM
+</dt>
+<dd>
+<p>
+Just start X with no clients, with access permissions such that the
+remote XDM is able to connect when it starts up. The following will
+start X with no access control:
+</p>
+<table bgcolor="#e0e0e0" border="1" width="90%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">          /usr/X11R6/bin/X -ac
+          </font>
+</pre>
+</td>
+</tr>
+</tbody></table>
+<p>
+When the remote XDM is started, it will 'push out' a login prompt
+to all such configured X servers (as listed in its Xservers file).
+</p>
+</dd>
+<dt>
+X Terminal: Query a remote XDM
+</dt>
+<dd>
+<p>
+Recall there are 3 modes for queries: direct, indirect and
+broadcast (direct for a single host, indirect for a list of hosts
+or broadcast for the first host that replies):
+</p>
+<table bgcolor="#e0e0e0" border="1" width="90%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">          /usr/X11R6/bin/X -query the.remote.host
+          /usr/X11R6/bin/X -indirect the.remote.host
+          /usr/X11R6/bin/X -broadcast
+          </font>
+</pre>
+</td>
+</tr>
+</tbody></table>
+</dd>
+</dl>
+</div>
+<p>
+In each case, X will probably have to be started as root.
+</p>
+<p>
+It is possible to have a machine automatically start X and perform
+a query for a running XDM on the network. One way is to 'hijack'
+the inittab setting for running as a graphical login (this is
+runlevel 5 on Debian and Redhat based systems, and 3 for SuSE -
+this example assumes runlevel 5 throughout). This is often the line
+beginning x:5 towards the end of /etc/inittab. Set this to (or add
+it if it doesn't exist):
+</p>
+<table bgcolor="#e0e0e0" border="1" width="100%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">    x:5:respawn:/usr/X11R6/bin/X -broadcast
+    </font>
+</pre>
+</td>
+</tr>
+</tbody></table>Replacing -broadcast with -direct or -indirect, etc. as
+required. You may have to change your default runlevel to be 5 too,
+(and then reboot), as follows:
+<table bgcolor="#e0e0e0" border="1" width="100%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">    id:5:initdefault:
+    </font>
+</pre>
+</td>
+</tr>
+</tbody></table>
+</div>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="XDM-STARTUP" id="XDM-STARTUP">4.5. Starting XDM</a>
+</h3>
+<p>
+<a name="XDM-STARTUP" id="XDM-STARTUP">In a standard X workstation
+configuration, XDM would typically be started up by specifying the
+default initial run-level to be that corresponding to a full
+graphical login. On Redhat and Debian based systems this is usually
+runlevel 5. On SuSE it is run-level 3.</a>
+</p><a name="XDM-STARTUP" id="XDM-STARTUP"></a>
+<p>
+It is possible to run XDM automatically on startup by changing the
+default runlevel to that described above. This is configured in
+/etc/inittab as follows:
+</p>
+<table bgcolor="#e0e0e0" border="1" width="100%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">    id:5:initdefault:
+    </font>
+</pre>
+</td>
+</tr>
+</tbody></table>
+<p>
+Alternatively it is possible to add a startup script for XDM itself
+to the rc scripts in the startup directories (/etc/rc.d/ for
+Redhat/Debian), to start and stop XDM in a similar manner to other
+services on a Linux machine.
+</p>
+<p>
+The following script is suitable for a Redhat (and probably
+Mandrake) based system, and should be saved as
+/etc/rc.d/init.d/xdm. You will have to enable it using 'chkconfig
+--add xdm'.
+</p>
+<table bgcolor="#e0e0e0" border="1" width="100%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">    #!/bin/sh
+    # xdm start/stop script for RedHat based systems
+    #
+    # chkconfig: 234 60 60
+    # description: xdm permits remote users to logon to this X display
+    # processname: /usr/X11R6/bin/xdm
+    # config: /etc/X11/xdm/xdm-config
+
+    # source function library
+    . /etc/rc.d/init.d/functions
+
+    [ -x /usr/X11R6/bin/xdm ] || exit 0
+
+    prog=/usr/X11R6/bin/xdm
+
+    RETVAL=0
+
+    start () {
+        echo -n $"Starting $prog: "
+        # start daemon
+        daemon $prog
+        RETVAL=$?
+        echo
+        [ $RETVAL = 0 ] &amp;&amp; touch /var/lock/subsys/xdm
+        return $RETVAL
+    }
+
+    stop () {
+        echo -n $"Stopping $prog: "
+        killproc $prog
+        RETVAL=$?
+        echo
+        [ $RETVAL = 0 ] &amp;&amp; rm -f /var/lock/subsys/xdm
+        return $RETVAL
+    }
+
+    restart () {
+        stop
+        start
+        RETVAL=$?
+        return $RETVAL
+    }
+
+    # See how we were called.
+    case "$1" in
+         start)
+        start
+        ;;
+         stop)
+        stop
+        ;;
+         status)
+        status $prog
+        RETVAL=$?
+        ;;
+         restart)
+        restart
+        ;;
+         condrestart)
+        # only restart if it is already running
+        [ -f /var/lock/subsys/xdm ] &amp;&amp; restart || :
+        ;;
+         reload)
+        echo -n $"Reloading $prog: "
+        killproc $prog -HUP
+        RETVAL=$?
+        echo
+        ;;
+         *)
+             echo $"Usage: $0 (start|stop|restart|condrestart|reload|status)"
+             RETVAL=1
+    esac
+
+    exit $RETVAL
+    </font>
+</pre>
+</td>
+</tr>
+</tbody></table>
+</div>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="XDM-CHOOSER" id="XDM-CHOOSER">4.6. The Chooser
+Application</a>
+</h3>
+<p>
+<a name="XDM-CHOOSER" id="XDM-CHOOSER">When XDM receives an
+indirect query, and assuming that the appropriate options have been
+specified in Xaccess for the 'chooser' application, it can provide
+the user with a list of other XDM managed servers that it knows
+about.</a>
+</p><a name="XDM-CHOOSER" id="XDM-CHOOSER"></a>
+<p>
+In this mode of operation, instead of the normal XDM login prompt,
+the user will be presented with a 'chooser' application, which will
+provide a list of detected hosts on the network that are currently
+accepting XDM connections.
+</p>
+<p>
+When I first tried the use the chooser, I found that the Xresources
+files that came with my SuSE and Debian systems, specified a size
+for the chooser widget that was too big for the screens ... The
+following line from the Xresources file fixed that:
+</p>
+<table bgcolor="#e0e0e0" border="1" width="100%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">      Chooser*geometry:      700x500+300+200
+      </font>
+</pre>
+</td>
+</tr>
+</tbody></table>
+<p>
+The chooser will obtain its lists of hosts by one of two methods:
+</p>
+<ul>
+<li>
+<p>
+Broadcast Query: In this mode a request is broadcast over the
+network, and a list is built up from the replies received from
+other application servers running XDM.
+</p>
+</li>
+<li>
+<p>
+Explicit Listing: It is possible to provide a list of hosts for the
+chooser in the Xaccess file, as follows:
+</p>
+<table bgcolor="#e0e0e0" border="1" width="90%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">        %hostlist      emma alex liam abigail
+        *              CHOOSER %hostlist
+        </font>
+</pre>
+</td>
+</tr>
+</tbody></table>This will mean that the hosts emma, alex, liam and abigail
+will all be listed as candidates - even if one of the machines is
+down (there is often a button to 'ping' the host to see if it is
+running, before trying to connect to it).
+</li>
+</ul>
+<p>
+Not that it is possible to include the localhost in the list of
+machines known to the chooser as well. XDM should be configured not
+to startup on the local console display though. Login should always
+be performed via an indirect query to the local chooser
+application, then the localhost should appear alongside any other
+hosts on the network.
+</p>
+</div>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="XDM-ALTERNATIVES" id="XDM-ALTERNATIVES">4.7. Alternatives
+to XDM</a>
+</h3>
+<p>
+<a name="XDM-ALTERNATIVES" id="XDM-ALTERNATIVES">Both KDE and Gnome
+have their own application to replace the standard XDM. They do
+similar things and are well documented. As far as providing remote
+X access, there is a single setting in the configuration file for
+the application to enable XDMCP support.</a>
+</p><a name="XDM-ALTERNATIVES" id="XDM-ALTERNATIVES"></a>
+<div class="VARIABLELIST">
+<dl>
+<dt>
+KDM: KDE Display Manager
+</dt>
+<dd>
+<p>
+The following must be set in the KDM configuration file
+(/usr/share/config/kdm/kdmrc for a Mandrake 8.1 system):
+</p>
+<table bgcolor="#e0e0e0" border="1" width="90%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">        [Xdmcp]
+        Enable=True
+        </font>
+</pre>
+</td>
+</tr>
+</tbody></table>
+</dd>
+<dt>
+GDM: Gnome Display Manager
+</dt>
+<dd>
+<p>
+The following must be set in the GDM configuration file
+(/etc/X11/gdm/gdm.conf):
+</p>
+<table bgcolor="#e0e0e0" border="1" width="90%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">        [Xdmcp]
+        Enable=True
+        </font>
+</pre>
+</td>
+</tr>
+</tbody></table>To have GDM running without starting the local X server,
+comment out the line
+<table bgcolor="#e0e0e0" border="1" width="90%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">        0=Standard
+        </font>
+</pre>
+</td>
+</tr>
+</tbody></table>in the 'servers' section of the configuration file too.
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="SECT1">
+<hr>
+<h2 class="SECT1">
+<a name="XDM-ADVCONFIG" id="XDM-ADVCONFIG">5. Advanced
+Configuration Options</a>
+</h2>
+<div class="SECT2">
+<a name="XDM-ADVCONFIG" id="XDM-ADVCONFIG"></a>
+<hr>
+<h3 class="SECT2">
+<a name="ADV-CONFIGSETS" id="ADV-CONFIGSETS">5.1. Configuration
+Sets</a>
+</h3>
+<p>
+<a name="ADV-CONFIGSETS" id="ADV-CONFIGSETS">The xdm-config file
+provides a rich set of options, when it comes to defined scripts
+and other configuration files. In many cases, the defaults provided
+with your distribution should be fine, but for those of you who
+want more ...</a>
+</p><a name="ADV-CONFIGSETS" id="ADV-CONFIGSETS"></a>
+<p>
+The names of the startup scripts and configuration files used by
+XDM are determined by a series of statements in the top-level
+xdm-config file. This permits you to configure a different set of
+files for different X servers and X terminals, with different
+abilities.
+</p>
+<p>
+For example, say you are using XDM to manage your local display,
+but also want it to accept queries from other X terminals on the
+network. It is possible to specify a different Xresources file for
+each of these cases, by using the following 2 lines in xdm-config:
+</p>
+<table bgcolor="#e0e0e0" border="1" width="100%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">      DisplayManager._0.resources            /etc/X11/xdm/Xres_0
+      DisplayManager*resources               /etc/X11/xdm/Xresources
+      </font>
+</pre>
+</td>
+</tr>
+</tbody></table>This will use Xres_0 for the local display (_0 is the XDM
+way of saying :0) and Xresources for everything else (the '*').
+<p>
+Similarly, if you wanted a particular resource file for a specific
+host, you would use an entry like the following:
+</p>
+<table bgcolor="#e0e0e0" border="1" width="100%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">      DisplayManager.host_0.resources       /etc/X11/xdm/Xres_host_0
+      </font>
+</pre>
+</td>
+</tr>
+</tbody></table>
+<p>
+Note that XDM configuration files use the terminology host_0, where
+you would normally use host:0, to designate 'display 0 on host'.
+</p>
+<p>
+If you look over your default xdm-config file, you will probably
+find that it has been setup so that your local X server has
+different files to the remote ones anyway, as different things must
+be performed on startup and reset of the server. My Debian file has
+the following for local servers:
+</p>
+<table bgcolor="#e0e0e0" border="1" width="100%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">      DisplayManager._0.resources:    /etc/X11/xdm/Xresources_0
+      DisplayManager._0.setup:        /etc/X11/xdm/Xsetup_0
+      DisplayManager._0.startup:      /etc/X11/xdm/Xstartup_0
+      DisplayManager._0.reset:        /etc/X11/xdm/Xreset_0
+      </font>
+</pre>
+</td>
+</tr>
+</tbody></table>and the following for remote servers:
+<table bgcolor="#e0e0e0" border="1" width="100%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">      DisplayManager*resources:       /etc/X11/xdm/Xresources
+      DisplayManager*setup:           /etc/X11/xdm/Xsetup
+      DisplayManager*startup:         /etc/X11/xdm/Xstartup
+      DisplayManager*reset:           /etc/X11/xdm/Xreset
+      </font>
+</pre>
+</td>
+</tr>
+</tbody></table>
+</div>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="X-RESOURCES" id="X-RESOURCES">5.2. X Resources</a>
+</h3>
+<p>
+<a name="X-RESOURCES" id="X-RESOURCES">This document has only
+briefly touched on the available X resources, but I should mention
+that it is possible to fully configure XDM via the Xresources
+file.</a>
+</p><a name="X-RESOURCES" id="X-RESOURCES"></a>
+<p>
+The following may all be changed if required:
+</p>
+<ul>
+<li>
+<p>
+Fonts, login prompt sizes
+</p>
+</li>
+<li>
+<p>
+Background graphics
+</p>
+</li>
+<li>
+<p>
+Window Titles, etc
+</p>
+</li>
+</ul>
+<p>
+There is a more detailed discussion of XDM resources, on Richard
+Kaszeta's web site (see <a href="#RESOURCES">Section 7</a>)
+</p>
+</div>
+</div>
+<div class="SECT1">
+<hr>
+<h2 class="SECT1">
+<a name="COMMON-CONFIGS" id="COMMON-CONFIGS">6. Common
+Configurations</a>
+</h2>
+<div class="SECT2">
+<a name="COMMON-CONFIGS" id="COMMON-CONFIGS"></a>
+<hr>
+<h3 class="SECT2">
+<a name="CFGS-LINUX" id="CFGS-LINUX">6.1. Linux to Linux</a>
+</h3>
+<div class="SECT3">
+<h4 class="SECT3">
+<a name="CFGS-LINUX" id="CFGS-LINUX"></a><a name="CFGS-STDALONEX" id="CFGS-STDALONEX">6.1.1. Stand-alone X Workstation</a>
+</h4>
+<p>
+<a name="CFGS-LINUX" id="CFGS-LINUX">This has already been
+mentioned several times in this document, but in summary, it is a
+PC running XDM, with a single entry in the Xservers file, relating
+to the localhost (i.e. the local machine).</a>
+</p><a name="CFGS-LINUX" id="CFGS-LINUX"></a>
+<p>
+This is usually the default configuration provided by most
+distributions 'out of the box'.
+</p>
+</div>
+<div class="SECT3">
+<hr>
+<h4 class="SECT3">
+<a name="CFGS-XTERMAPPS" id="CFGS-XTERMAPPS">6.1.2. X Terminal and
+Application Server</a>
+</h4>
+<p>
+<a name="CFGS-XTERMAPPS" id="CFGS-XTERMAPPS">XDM runs on the
+application server:</a>
+</p>
+<ul>
+<li>
+<p>
+Xserver: Contains no entries
+</p>
+</li>
+<li>
+<p>
+Xaccess: Must permit the X terminal to connect
+</p>
+</li>
+</ul>
+<p>
+X terminal runs X using a direct query to the application server:
+</p>
+<table bgcolor="#e0e0e0" border="1" width="100%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">          /usr/X11R6/bin/X -query the.application.server
+          </font>
+</pre>
+</td>
+</tr>
+</tbody></table>
+</div>
+<div class="SECT3">
+<hr>
+<h4 class="SECT3">
+<a name="CFGS-MNGEXTERM" id="CFGS-MNGEXTERM">6.1.3. Group of
+Managed X Terminals</a>
+</h4>
+<p>
+<a name="CFGS-MNGEXTERM" id="CFGS-MNGEXTERM">XDM runs on an
+application server:</a>
+</p>
+<ul>
+<li>
+<p>
+Xserver: Lists each X terminal to be managed
+</p>
+</li>
+<li>
+<p>
+Xaccess: Must permit each X terminal to connect
+</p>
+</li>
+</ul>
+<p>
+Each X terminal, just runs X, with suitable access control to
+permit XDM to connect to it.
+</p>
+<table bgcolor="#e0e0e0" border="1" width="100%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">          /usr/X11R6/bin/X -ac
+        </font>
+</pre>
+</td>
+</tr>
+</tbody></table>
+</div>
+</div>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="CFGS-TOOTHER" id="CFGS-TOOTHER">6.2. Linux to Other
+Systems</a>
+</h3>
+<p>
+<a name="CFGS-TOOTHER" id="CFGS-TOOTHER">It is possible to use a
+Linux X terminal to connect to another system running XDM. The same
+principles as above apply, but the specifics of configuring XDM (or
+its equivalent) will be specific to that system.</a>
+</p><a name="CFGS-TOOTHER" id="CFGS-TOOTHER"></a>
+<div class="SECT3">
+<hr>
+<h4 class="SECT3">
+<a name="CFGS-LINSOL" id="CFGS-LINSOL">6.2.1. Linux and Solaris</a>
+</h4>
+<p>
+<a name="CFGS-LINSOL" id="CFGS-LINSOL">You can run X on a Linux
+box, instructing it to query a Solaris machine as previously
+described:</a>
+</p>
+<table bgcolor="#e0e0e0" border="1" width="100%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">          /usr/X11R6/bin/X -query the.solaris.server
+         </font>
+</pre>
+</td>
+</tr>
+</tbody></table>
+<p>
+Note that you may have to configure X on the Linux machine to use
+the font server from the Solaris box. Although my Linux box
+connected and logged in fine without doing this, the fonts used by
+CDE were not displayed correctly.
+</p>
+<p>
+I have not got this to work yet, as I don't have a Solaris box that
+I have any control over - but I am told that a font entry in
+/etc/XF86config similar to the following should work - you may have
+to change the port number from 7200 to something else (7100 has
+been quoted at me before). Can anyone confirm that this works?
+</p>
+<table bgcolor="#e0e0e0" border="1" width="100%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">           FontPath "tcp/solaris.box:7200/all"
+         </font>
+</pre>
+</td>
+</tr>
+</tbody></table>
+</div>
+<div class="SECT3">
+<hr>
+<h4 class="SECT3">
+<a name="CFGS-LINWIN" id="CFGS-LINWIN">6.2.2. Linux and Windows</a>
+</h4>
+<p>
+<a name="CFGS-LINWIN" id="CFGS-LINWIN">It is not possible to use X
+to remotely display Windows applications on a Windows box. It is
+possible to use X to display Windows versions of X applications on
+a Linux box, using a Windows X Server and Windows X applications
+(for example the XFree86 Win32 port - see</a> <a href="#RESOURCES">Section 7</a>)
+</p>
+<p>
+It is possible to view Windows applications remotely on a Linux box
+using one of the following applications (which don't rely on X or
+XDM):
+</p>
+<ul>
+<li>
+<p>
+Windows Terminal Services (WTS). RDesktop is a Linux application
+that understands the 'RDP' protocol used by WTS. This enables Linux
+to act as a client to WTS (see <a href="#RESOURCES">Section 7</a>).
+</p>
+</li>
+<li>
+<p>
+Vitual Network Computing (VNC). This is an excellent platform
+independent remote desktop system that provides a bi-directional
+'Windows or Linux' to 'Windows or Linux' networked desktop. It can
+be a bit slow, but works well (see <a href="#RESOURCES">Section
+7</a>).
+</p>
+<p>
+You can actually do quite strange things with VNC, such has having
+multiple machines connect and 'control' the desktop (and
+consequently 'fight' over control of the mouse :). It also doesn't
+maintain any state in the client, so you can leave your client,
+shutdown, bootup again, reconnect and carry on from where you left
+off. There is even a version of the viewer implemented as a Java
+applet, usable from any Java-enabled web browser.
+</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="SECT2">
+<hr>
+<h3 class="SECT2">
+<a name="CFGS-TOLINUX" id="CFGS-TOLINUX">6.3. Other Systems to
+Linux</a>
+</h3>
+<p>
+<a name="CFGS-TOLINUX" id="CFGS-TOLINUX">If you have an X server
+for your system, it should be able to connect to a Linux XDM
+application server.</a>
+</p><a name="CFGS-TOLINUX" id="CFGS-TOLINUX"></a>
+<div class="SECT3">
+<hr>
+<h4 class="SECT3">
+<a name="CFGS-SOLLIN" id="CFGS-SOLLIN">6.3.1. Solaris and Linux</a>
+</h4>
+<p>
+<a name="CFGS-SOLLIN" id="CFGS-SOLLIN">I assume that you would run
+XDM on the Linux box as usual, and instruct X on Solaris to query
+the Linux box - does anyone have any information on this?</a>
+</p><a name="CFGS-SOLLIN" id="CFGS-SOLLIN"></a>
+</div>
+<div class="SECT3">
+<a name="CFGS-SOLLIN" id="CFGS-SOLLIN"></a>
+<hr>
+<h4 class="SECT3">
+<a name="WINLIN" id="WINLIN">6.3.2. Windows and Linux</a>
+</h4>
+<p>
+<a name="WINLIN" id="WINLIN">If you have an X server for windows
+that supports XDMCP queries, then it should be possible to
+configure it to query the Linux box. You should just run XDM on the
+Linux box as usual.</a>
+</p><a name="WINLIN" id="WINLIN"></a>
+<p>
+There are many commercial X Server implementations for Windows, and
+I will not list them all here. There is also a port of XFree86 to
+Windows, that makes use of the cygwin libraries (used to port many
+GNU/Linux tools to Windows - see <a href="#RESOURCES">Section
+7</a>). This works well.
+</p>
+<p>
+The following batch file would start the cygwin XFree86 X server on
+Windows and connect to a Linux box (or any OS/machine running XDM),
+assuming a default installation of cygwin and XFree86 in c:\cygwin
+(save it as xdm.bat):
+</p>
+<table bgcolor="#e0e0e0" border="1" width="100%">
+<tbody><tr>
+<td>
+<pre class="SCREEN"><font color="#000000">           @echo off
+           if "%1"=="" goto noserver
+           goto allok
+           :noserver
+           echo Usage: xdm servername
+           goto end
+
+           :allok
+           set path=%PATH%;\cygwin\bin;\cygwin\usr\X11R6\bin
+           c:
+           chdir \cygwin\usr\X11R6\bin
+           XWin -query %1
+
+           :end
+         </font>
+</pre>
+</td>
+</tr>
+</tbody></table>
+</div>
+</div>
+</div>
+<div class="SECT1">
+<hr>
+<h2 class="SECT1">
+<a name="RESOURCES" id="RESOURCES">7. Resources</a>
+</h2>
+<p>
+<a name="RESOURCES" id="RESOURCES">This section lists some
+resources that have been consulted in order to construct this
+document and which provide further details to the concepts
+described.</a>
+</p><a name="RESOURCES" id="RESOURCES"></a>
+<p>
+Many of the references listed below form part of the Linux
+Documentation Project (LDP): <a href="http://www.tldp.org/" target="_top">http://www.tldp.org/</a>
+</p>
+<div class="VARIABLELIST">
+<dl>
+<dt>
+The X Window System
+</dt>
+<dd>
+<ul>
+<li>
+<p>
+X User Howto (from the <a href="http://www.tldp.org/" target="_top">LDP</a>)
+</p>
+</li>
+<li>
+<p>
+Running Remote X Applications Mini Howto (from the <a href="http://www.tldp.org/" target="_top">LDP</a>)
+</p>
+</li>
+<li>
+<p>
+Man pages: X (main concepts), Xserver (X server concepts)
+</p>
+</li>
+<li>
+<p>
+X FAQ (on <a href="http://www.x.org/" target="_top">http://www.x.org/</a>)
+</p>
+</li>
+</ul>
+</dd>
+<dt>
+Thin-clients/X terminals
+</dt>
+<dd>
+<ul>
+<li>
+<p>
+Thin-client Howto Document (from the <a href="http://www.tldp.org/" target="_top">LDP</a>)
+</p>
+</li>
+<li>
+<p>
+Linux Terminal Server Project: <a href="http://www.ltsp.org/" target="_top">http://www.ltsp.org/</a>
+</p>
+</li>
+<li>
+<p>
+Setting up LTSP systems (using quiet hardware): <a href="http://development.gbdirect.co.uk/xterminal.html" target="_top">http://development.gbdirect.co.uk/xterminal.html</a>
+</p>
+</li>
+<li>
+<p>
+Diskless Howto Document (from the <a href="http://www.tldp.org/" target="_top">LDP</a>)
+</p>
+</li>
+<li>
+<p>
+X terminal pages: <a href="http://dns.solucorp.qc.ca/xterminals" target="_top">http://dns.solucorp.qc.ca/xterminals</a>
+</p>
+</li>
+<li>
+<p>
+Richard Kaszeta: Converting old PCs into Standalone X Terminals:
+<a href="http://www.menet.umn.edu/%7Ekaszeta/unix/xterminal/" target="_top">http://www.menet.umn.edu/~kaszeta/unix/xterminal/</a>
+</p>
+</li>
+</ul>
+</dd>
+<dt>
+XDM, XDMCP, etc
+</dt>
+<dd>
+<ul>
+<li>
+<p>
+Man pages: xdm
+</p>
+</li>
+<li>
+<p>
+XDMCP Howto Document (from the <a href="http://www.tldp.org/" target="_top">LDP</a>)
+</p>
+</li>
+</ul>
+</dd>
+<dt>
+Software
+</dt>
+<dd>
+<ul>
+<li>
+<p>
+Cygwin/XFree86 (Win32): <a href="http://www.cygwin.com/" target="_top">http://www.cygwin.com/</a>
+</p>
+</li>
+<li>
+<p>
+VNC: <a href="http://www.uk.research.att.com/vnc/" target="_top">http://www.uk.research.att.com/vnc/</a>
+</p>
+</li>
+<li>
+<p>
+rdesktop: <a href="http://www.rdesktop.org/" target="_top">http://www.rdesktop.org/</a>
+</p>
+</li>
+<li>
+<p>
+X Servers for Windows (and other systems): <a href="http://www.rahul.net/kenton/xsites.html" target="_top">http://www.rahul.net/kenton/xsites.html</a>
+</p>
+</li>
+<li>
+<p>
+GPL Java X Server: <a href="http://www.jcraft.com/weirdx/" target="_top">http://www.jcraft.com/weirdx/</a>
+</p>
+</li>
+<li>
+<p>
+X Terminal/Diskless specific distributions: <a href="http://lwn.net/Distributions/" target="_top">http://lwn.net/Distributions/</a>
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+</body></html>

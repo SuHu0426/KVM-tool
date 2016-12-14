@@ -1,0 +1,20 @@
+README for sysv-rc
+------------------
+
+Policy requires that maintainer scripts use update-rc.d to register and
+deregister initscripts.  An unfortunate result of this policy, combined
+with shortcomings in current update-rc.d implementations, is that there
+is no way for maintainer scripts to change the sequence number of an
+initscript that has already been registered if and only if its sequence
+number has not been changed by the administrator.  update-rc.d *never*
+changes the sequence number of an already registered initscript, even
+if its sequence number has not been changed by the administrator.
+There are no plans to fix this problem.  Therefore, if it is necessary
+to change the sequence number of an initscript in order to fix a bug
+then the maintainer script should go ahead and do:
+
+    update-rc.d -f <scriptname> remove
+
+before the new update-rc.d call, even though this overrides out any
+administrator changes.
+

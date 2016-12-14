@@ -1,0 +1,27 @@
+#! /bin/bash
+sudo echo "Need Super User ID"
+
+if [ -d /mnt/tmp/etc -a ! -f /mnt/tmp/etc/inittab.orig ]
+  then 
+    CWD=`pwd`
+    cd DebianNetFiles
+    sudo mv /mnt/tmp/etc/inittab /mnt/tmp/etc/inittab.orig
+    sudo mv /mnt/tmp/etc/securetty /mnt/tmp/etc/securetty.orig
+    sudo mv /mnt/tmp/etc/network/interfaces /mnt/tmp/etc/network/interfaces.orig
+    sudo mv /mnt/tmp/etc/hostname /mnt/tmp/etc/hostname.orig
+    sudo mv /mnt/tmp/etc/apt/sources.list /mnt/tmp/etc/apt/sources.list.orig
+    # sudo mv /mnt/tmp/etc/ssh/ssh_config /mnt/tmp/etc/ssh/ssh_config.orig
+    # sudo mv /mnt/tmp/etc/ssh/sshd_config /mnt/tmp/etc/ssh/sshd_config.orig
+    sudo cp ./fstab ./hostname ./hosts ./inittab ./securetty  /mnt/tmp/etc
+    sudo cp ./sources.list /mnt/tmp/etc/apt
+    sudo cp ./interfaces /mnt/tmp/etc/network
+    # sudo cp ./ssh_config /mnt/tmp/etc/ssh/ssh_config
+    # sudo cp ./sshd_config /mnt/tmp/etc/ssh/sshd_config
+    sudo cp ./DebianNet-pkgs.txt /mnt/tmp/tmp
+
+    cd ${CWD}
+  else
+    echo "Either /mnt/tmp/etc does not exist or base installation configured."
+    echo "Quit"
+    exit 1
+fi

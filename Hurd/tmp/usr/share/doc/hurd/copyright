@@ -1,0 +1,31 @@
+This package was debianized by Marcus Brinkmann <brinkmd@debian.org>
+on Tue,  4 Aug 1998 21:52:45 +0200
+
+It is currently maintained by the Debian GNU Hurd maintainers, who can be
+reached via <debian-hurd@lists.debian.org>.
+
+Sources are available from http://savannah.gnu.org/projects/hurd
+
+Copyright statement:
+
+The GNU Hurd is copyrighted by the Free Software Foundation, Inc.
+
+Note that the libraries distributed with the GNU Hurd are placed under
+the standard GNU General Public License (*not* the Library General
+Public License).
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; version 2 dated June, 1991.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+
+On Debian systems, the complete text of the GNU General Public License
+can be found in `/usr/share/common-licenses/GPL'.

@@ -1,0 +1,8 @@
+Package: dpkg
+Version: 1.15.4
+Status: install ok installed
+
+Package: hurd
+Version: 20090404-2
+Status: install ok installed
+

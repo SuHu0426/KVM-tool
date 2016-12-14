@@ -1,0 +1,48 @@
+#! /bin/bash
+sudo echo "Need Super User ID"
+
+
+# Backup hosts.allow and hosts.deny and setup our own related files
+
+if [ ! -f /mnt/tmp/etc/hosts.allow.orig ]
+  then 
+    CWD=`pwd`
+    cd DebianNetFiles
+    if [ -f /mnt/tmp/etc/hosts.allow ]
+       then sudo mv /mnt/tmp/etc/hosts.allow /mnt/tmp/etc/hosts.allow.orig
+    else sudo cp ./hosts.allow.orig  /mnt/tmp/etc/hosts.allow.orig
+    fi
+
+    if [ ! -f /mnt/tmp/etc/hosts.deny.orig ]
+       then if [ -f /mnt/tmp/etc/hosts.deny ]
+              then sudo mv /mnt/tmp/etc/hosts.deny /mnt/tmp/etc/hosts.deny.orig
+            else sudo cp ./hosts.deny.orig  /mnt/tmp/etc/hosts.deny.orig
+            fi
+    fi
+
+    # Set up our own hosts.allow and hosts.deny policy
+    sudo cp ./hosts.allow /mnt/tmp/etc
+    sudo cp ./hosts.deny /mnt/tmp/etc
+
+    cd ${CWD}
+else
+    echo "It seems hosts.allow and hosts.deny have been configured!"
+    echo "Quit"
+    exit 1
+fi
+
+if [ -d /mnt/tmp/etc -a ! -f /mnt/tmp/etc/ssh/ssh_config.orig ]
+  then 
+    CWD=`pwd`
+    cd DebianNetFiles
+    sudo mv /mnt/tmp/etc/ssh/ssh_config /mnt/tmp/etc/ssh/ssh_config.orig
+    sudo mv /mnt/tmp/etc/ssh/sshd_config /mnt/tmp/etc/ssh/sshd_config.orig
+    sudo cp ./ssh_config /mnt/tmp/etc/ssh/ssh_config
+    sudo cp ./sshd_config /mnt/tmp/etc/ssh/sshd_config
+
+    cd ${CWD}
+  else
+    echo "It seems ssh client and server have been configured!"
+    echo "Quit"
+    exit 2
+fi

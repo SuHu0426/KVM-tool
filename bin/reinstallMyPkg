@@ -1,0 +1,13 @@
+#!/bin/bash
+# This script installs extra packages after initial system installation
+
+if [ $EUID != 0 ]
+  then echo "Only Super user can execute this script."
+  exit 1
+elif [ $# != 1 ]
+  then echo "$0 package-list-file"
+  exit 2
+fi
+
+dpkg --set-selections < $1
+apt-get dselect-upgrade 

@@ -1,0 +1,13 @@
+#! /bin/bash
+
+if [ $# -gt 0 ]
+  then echo "This script empties the harmful /etc/udev/rules.d/70-persistent-net.rules file"
+elif  [ ! -f Empty70NetFile ]
+  then echo "Empty70NetFile does not exist!"
+       exit 1
+elif  [ $EUID -ne 0 ]
+  then echo "Need to be Super User"
+       exit 2
+else 
+  cp Empty70NetFile /etc/udev/rules.d/70-persistent-net.rules
+fi

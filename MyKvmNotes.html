@@ -1,0 +1,1758 @@
+<html>
+  <head><title>Setting Up Kvm</title></head>
+<body>
+
+<h3>Some maybe still useful notes:</h3>
+  <OL>
+    <LI> On 09/10/2015, on Kvm based Gparted VM, eth0 ethercard was renamed to be ens3.
+
+<P><a href="http://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/" target="_b">Predictable Network Interface Names</a>&nbsp;&nbsp
+<a href="http://cgit.freedesktop.org/systemd/systemd/tree/src/udev/udev-builtin-net_id.c" target="_b">udev-builtin-net_id.c</a>
+
+<PRE>
+Gparted:~$ find /sys/devices -name "net"
+/sys/devices/pci0000:00/0000:00:03.0/net
+/sys/devices/virtual/net
+Gparted:~$ ls -l /sys/devices/pci0000:00/0000:00:03.0/net
+total 0
+drwxr-xr-x 5 root root 0 Sep 10 20:37 ens3
+</PRE>
+
+<P> <a href="http://askubuntu.com/questions/689070/network-interface-name-changes-after-update-to-15-10-udev-changes" target="_b">Try them all, none worked.</a>  Even can no 
+longer upgrade kernel.  Because I killed some udev related files, the initrd* file 
+failed to be regenerated.  After "sudo apt-get install udev --reinstall", 
+update-initramfs can be successfully executed. And get the "eth0" back.
+
+
+<P> Basically, we can try:
+
+<OL>
+  <LI>
+<PRE>
+ $ udevadm test-builtin net_id /sys/class/net/ens3 2>/dev/null 
+ PATH:  enp0s3
+ $ cat /etc/udev/rules.d/10-network.rules
+SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="1c:6f:65:35:14:4b", KERNEL=="enp0s3", NAME="eth0"
+ # Probably, need to update-initramfs, since it seems "ens3" is recorded in the init ram 
+ # disk.
+</PRE>
+
+<P> After successfully reboot,
+
+<PRE>
+$ sudo rm /etc/udev/rules.d/10-network.rules
+</PRE>
+
+  <LI> Edit your /etc/default/grub by modifying
+<PRE>
+GRUB_CMDLINE_LINUX=""
+
+to
+
+GRUB_CMDLINE_LINUX="net.ifnames=0 biosdevname=0"
+$ sudo update-grub
+</PRE>
+</OL>
+
+    <LI> Sorry about this unrelated message, but rather important:
+
+<P>  When we deploy high availability virtual machines on the net, our primary concern
+  is user friendliness.  But, the ssh attacks from China occupied 1/3 of the log files 
+  in <code>/var/log/au*</code>.  I set up /etc/hosts.deny (on av-09) as follow:
+
+<PRE>
+$ diff /etc/hosts.deny /etc/hosts.deny.orig
+20,21d19
+< sshd: .cn, .cn.net, .cn.com
+< sshd: UNKNOWN
+</PRE>
+
+<P>  Guess what!  We have reduced the file sizes of these log files to 1/4.  What this 
+   means in plain English is that our system spent much less CPU cycles handling the
+   unwanted ssh connection requests.  Or in other words, our precious CPU cycles are 
+   saved.  But, in the larger picture, our precious net bandwidth can be used more 
+   wisely. I think Professor Kou can give us much more insight in this matter!  How or 
+   could we set up another virtual machine to gather some meaningful statistics? This
+   problem has bothered me for two or three years.
+
+<P>  I think this problem is significant, since the quality of tar net is much worse 
+   than that of lousy TT&T.
+
+<P> <b>Note: (07/13/2009)</b>  Fail2ban stopped working on Jul 12 06:25.  Someone tried 
+   to login (via ssh) 9814 times from Ip address: 212.75.215.254 (Italy). We are in 
+   deep trouble.  First, why and how fail2ban was disabled?  Even if it were enabled, 
+   could it catch this IP address, since the ports used were changing?  I think so, 
+   since if it worked normally, no login attempts exceeded 100 times.  Restart fail2ban 
+   on Jul 13 09:17:02 CST 2009.
+
+    <LI> <b>Note: (06/30/2010)</b>
+
+<P> I also installed Debian/Lenny and upgraded to Debian/Squeeze.  After several system 
+ upgradings, UUID and <code>/dev/disk/by-uuid</code> business failed miserably.  When 
+ booting deb-sqz, all I saw was "Starting SeaBIOS" and "Unaligned Pointer" messages.
+ The "Unaligned Pointer" message was caused by the "search ... " lines in the 
+ <code>/boot/grub/grub.cfg</code> file.  Eliminate these lines by editing the
+ <code>/usr/lib/grub/grub-mkconfig_lib</code> file as follow and execute 
+ <b>update-grub</b> command:
+
+<PRE>
+$ diff /usr/lib/grub/grub-mkconfig_lib /usr/lib/grub/grub-mkconfig_lib.orig
+130,132c130,132
+<   # if fs_uuid="`${grub_probe} --device ${device} --target=fs_uuid 2> /dev/null`" ; then
+<   #   echo "search --no-floppy --fs-uuid --set ${fs_uuid}"
+<   # fi
+---
+>   if fs_uuid="`${grub_probe} --device ${device} --target=fs_uuid 2> /dev/null`" ; then
+>     echo "search --no-floppy --fs-uuid --set ${fs_uuid}"
+>   fi
+</PRE>
+<P>Before booting the system, often, <code>/dev/disk</code> is not available.  In this 
+case, UUID is totally useless. I edit the <code>/boot/grub/grub.cfg</code> file so that
+kvm can boot Debian/Lenny and Debian/Squeeze:
+
+<P><B>Note 1: (07/23/2010)</b> In KVM/Lenny, hard disk partition 1 is referred as 
+<code>/dev/hda1</code>, and in KVM/Squeeze, it is referred as <code>/dev/sda1</code>.
+
+<P><B>Note 2: (07/23/2010)</b> Linux-image-2.6.32-15*amd64*, 
+Linux-image-2.6.32-16*amd64*,  Linux-image-2.6.32-17*amd64*, three versions does 
+not work for KVM based virtual machines.  (Boot failure!)
+<PRE>
+$ diff /boot/grub/grub.cfg /boot/grub/grub.cfg.orig
+55c55
+< 	set root='(hd0,1)'
+---
+> 	set root='(/dev/loop0)'
+57c57
+< 	linux	/boot/vmlinuz-2.6.32-5-amd64 root=/dev/sda1 ro  quiet
+---
+> 	linux	/boot/vmlinuz-2.6.32-5-amd64 root=/src3/KVM/Debian-sqz.img ro  quiet
+63c63
+< 	set root='(hd0,1)'
+---
+> 	set root='(/dev/loop0)'
+65c65
+< 	linux	/boot/vmlinuz-2.6.32-5-amd64 root=/dev/sda1 ro single 
+---
+> 	linux	/boot/vmlinuz-2.6.32-5-amd64 root=/src3/KVM/Debian-sqz.img ro single 
+71c71
+< 	set root='(hd0,1)'
+---
+> 	set root='(/dev/loop0)'
+73c73
+< 	linux	/boot/vmlinuz-2.6.26-2-amd64 root=/dev/hda1 ro  quiet
+---
+> 	linux	/boot/vmlinuz-2.6.26-2-amd64 root=/src3/KVM/Debian-sqz.img ro  quiet
+79c79
+< 	set root='(hd0,1)'
+---
+> 	set root='(/dev/loop0)'
+81c81
+< 	linux	/boot/vmlinuz-2.6.26-2-amd64 root=/dev/hda1 ro single 
+---
+> 	linux	/boot/vmlinuz-2.6.26-2-amd64 root=/src3/KVM/Debian-sqz.img ro single 
+</PRE>
+
+<P> A working <b>grub.cfg</b> file:
+
+<PRE>
+$ cat /boot/grub/grub.cfg
+#
+# DO NOT EDIT THIS FILE
+#
+# It is automatically generated by grub-mkconfig using templates
+# from /etc/grub.d and settings from /etc/default/grub
+#
+
+### BEGIN /etc/grub.d/00_header ###
+if [ -s $prefix/grubenv ]; then
+  load_env
+fi
+set default="0"
+if [ "${prev_saved_entry}" ]; then
+  set saved_entry="${prev_saved_entry}"
+  save_env saved_entry
+  set prev_saved_entry=
+  save_env prev_saved_entry
+  set boot_once=true
+fi
+
+function savedefault {
+  if [ -z "${boot_once}" ]; then
+    saved_entry="${chosen}"
+    save_env saved_entry
+  fi
+}
+insmod ext2
+set root='(/dev/loop0)'
+if loadfont /usr/share/grub/unicode.pf2 ; then
+  set gfxmode=640x480
+  insmod gfxterm
+  insmod vbe
+fi
+if terminal_output gfxterm ; then true ; else
+  # For backward compatibility with versions of terminal.mod that don't
+  # understand terminal_output
+  terminal gfxterm
+fi
+insmod ext2
+set root='(/dev/loop0)'
+set locale_dir=($root)/boot/grub/locale
+set lang=en
+insmod gettext
+set timeout=5
+### END /etc/grub.d/00_header ###
+
+### BEGIN /etc/grub.d/05_debian_theme ###
+set menu_color_normal=cyan/blue
+set menu_color_highlight=white/blue
+### END /etc/grub.d/05_debian_theme ###
+
+### BEGIN /etc/grub.d/10_linux ###
+menuentry 'Debian GNU/Linux, with Linux 2.6.32-5-amd64' --class debian --class gnu-linux --class gnu --class os {
+	insmod ext2
+	set root='(hd0,1)'
+	echo	'Loading Linux 2.6.32-5-amd64 ...'
+	linux	/boot/vmlinuz-2.6.32-5-amd64 root=/dev/sda1 ro  quiet
+	echo	'Loading initial ramdisk ...'
+	initrd	/boot/initrd.img-2.6.32-5-amd64
+}
+menuentry 'Debian GNU/Linux, with Linux 2.6.32-5-amd64 (recovery mode)' --class debian --class gnu-linux --class gnu --class os {
+	insmod ext2
+	set root='(hd0,1)'
+	echo	'Loading Linux 2.6.32-5-amd64 ...'
+	linux	/boot/vmlinuz-2.6.32-5-amd64 root=/dev/sda1 ro single 
+	echo	'Loading initial ramdisk ...'
+	initrd	/boot/initrd.img-2.6.32-5-amd64
+}
+menuentry 'Debian GNU/Linux, with Linux 2.6.26-2-amd64' --class debian --class gnu-linux --class gnu --class os {
+	insmod ext2
+	set root='(hd0,1)'
+	echo	'Loading Linux 2.6.26-2-amd64 ...'
+	linux	/boot/vmlinuz-2.6.26-2-amd64 root=/dev/hda1 ro  quiet
+	echo	'Loading initial ramdisk ...'
+	initrd	/boot/initrd.img-2.6.26-2-amd64
+}
+menuentry 'Debian GNU/Linux, with Linux 2.6.26-2-amd64 (recovery mode)' --class debian --class gnu-linux --class gnu --class os {
+	insmod ext2
+	set root='(hd0,1)'
+	echo	'Loading Linux 2.6.26-2-amd64 ...'
+	linux	/boot/vmlinuz-2.6.26-2-amd64 root=/dev/hda1 ro single 
+	echo	'Loading initial ramdisk ...'
+	initrd	/boot/initrd.img-2.6.26-2-amd64
+}
+### END /etc/grub.d/10_linux ###
+
+### BEGIN /etc/grub.d/30_os-prober ###
+### END /etc/grub.d/30_os-prober ###
+
+### BEGIN /etc/grub.d/40_custom ###
+# This file provides an easy way to add custom menu entries.  Simply type the
+# menu entries you want to add after this comment.  Be careful not to change
+# the 'exec tail' line above.
+### END /etc/grub.d/40_custom ###
+
+### BEGIN /etc/grub.d/41_custom ###
+if [ -f  $prefix/custom.cfg ]; then
+  source $prefix/custom.cfg;
+fi
+### END /etc/grub.d/41_custom ###
+</PRE>
+
+  </OL>
+<a name="MintVm"></a><h3>LinuxMint Lisa Installation</h3>
+
+<LI> Download <a href="http://free.nchc.org.tw/linuxmint/isos/stable/12/" 
+     target="newwindow">linuxmint-12-gnome-dvd-64bit.iso</a>
+
+<LI> Preparing its own Directory:
+
+<PRE>
+  $ cd /src3/KVM 
+  $ mkdir LinuxMint; cd LinuxMint 
+  $ mv $HOME/Downloads/linuxmint-12-gnome-dvd-64bit.iso . 
+  $ qemu-img create LinuxMint-Lisa.img 7G
+  # Specify 1024M memory. Otherwise, rather slow booting.
+  $ kvm -m 1024 -cdrom linuxmint-12-gnome-dvd-64bit.iso LinuxMint-Lisa.img  
+  # Partition Hard Disk: /boot, 512M, ext2 and /, the rest, ext4.
+</PRE>
+
+<LI> Offset Calculation
+
+<PRE>
+$ /sbin/fdisk -l LinuxMint-Lisa.img
+Disk LinuxMint-Lisa.img: 7516 MB, 7516192768 bytes
+255 heads, 63 sectors/track, 913 cylinders, total 14680064 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk identifier: 0x000eff78
+
+             Device Boot      Start         End      Blocks   Id  System
+LinuxMint-Lisa.img1   *        2048      999423      498688   83  Linux
+LinuxMint-Lisa.img2          999424    14678015     6839296   83  Linux
+# offset 512x999424=511705088
+</PRE>
+
+<LI> Start and Stop Shell Scripts Generation:
+
+<PRE>
+ $ cd ../bin 
+ $ ./Config-Kvm ../LinuxMint/LinuxMint-Lisa.img MintVm 192.168.0.247 eth0 7 
+ $ ls -l *MintVm*
+-rwxr-xr-x 1 hsu hsu 1111 Feb 18 21:16 start-MintVm-7
+-rwxr-xr-x 1 hsu hsu 1142 Feb 18 21:16 start-MintVm-7-AsDaemon
+-rwxr-xr-x 1 hsu hsu 1235 Feb 18 21:16 start-MintVm-7-efs
+-rwxr-xr-x 1 hsu hsu 1821 Feb 18 21:16 stop-MintVm-restore-lan-7
+</PRE>
+
+<P>   We can successfully start linuxmint via <b>start-MintVm-7</b> script, but 
+  after login, disable the network connection attempt originated by the network 
+  manager of LinuxMint (, inherited from ubuntu).  Get a terminal, and from the 
+  terminal, execute the next command to recover our own network connection:
+
+<PRE>
+ $ sudo /etc/rc.local 
+</PRE>
+
+<P>   This also means that we can't start LinuxMint as a daemon, the consequence 
+ of private and shameful Ubuntu Network Management. <b>Note: (02/25/2012)</b> 
+ Get rid of <code>network-manager</code> and <code>network-manager-gnome</code>, 
+ The script <b>/etc/rc.local</b> gives us the normal network connection!!
+
+<P> <b>Note: (02/25/2012)</b> LinuxMint's Network-manager (inherited from Ubuntu) is 
+no good for VM network!  Disable it permanently via next command:
+
+<PRE>
+ $ sudo dpkg -P network-manager network-manager-gnome
+</PRE>
+
+<P> <b>Note: (04/13/2012)</b> Ubuntu <b>Network-manager</b> is intertwined with 
+ <b>gnome-core</b>, purge network-manager will also purge gnome-core.  The net 
+ result is: No longer able to login Ubuntu via qemu console!
+
+<LI> /etc/apt/sources.list
+
+<P> Edit <code>sources.list</code> in host and scp it to the <code>/tmp</code> directory 
+  of MintVm and mv it to its <code>/etc/apt</code> directory.
+
+<PRE>
+ $ cat /tmp/sources.list
+## -----------------------
+## LINUX MINT REPOSITORIES
+## -----------------------
+## LinuxMint Stable
+deb http://amm/linuxmint lisa main upstream import
+## LinuxMint (not as Stable)
+deb http://amm/linuxmint lisa backport
+## LinuxMint Community (not as Stable)
+# deb http://amm/linuxmint lisa community
+## LinuxMint Unstable
+deb http://amm/linuxmint lisa romeo 
+## After all, LinuxMint 12 is a derivative of Ubuntu oneiric, we also need its 
+## repositories.
+deb http://amm/ubuntu/ oneiric main restricted universe multiverse
+deb http://amm/ubuntu/ oneiric-updates main restricted universe multiverse
+deb http://amm/ubuntu/ oneiric-backports main restricted universe multiverse
+deb http://amm/ubuntu/ oneiric-proposed main restricted universe multiverse
+</PRE>
+
+<P> From the MintVm terminal, copy host:/tmp/sources.list to /tmp
+<PRE>
+ $ scp 192.168.0.33:/tmp/sources.list /tmp 
+ $ mv /etc/apt/sources.list /etc/apt/sources.list.orig 
+ $ sudo mv /tmp/sources.list /etc/apt
+ # Edit /etc/hosts so that the IP address of amm will be known
+ $ sudo aptitude update; sudo aptitude safe-upgrade 
+</PRE>
+
+<LI> Install emacs, openssh-server, deborphan
+
+<PRE>
+ $ sudo apt-get install emacs openssh-server deborphan
+ $ deborphan # If output is not empty, execute this pair of commands until 
+             # deborphan outputs nothing
+ $ sudo dpkg -P `deborphan`
+ # Starting with 7G, after installation, only 42% (2.7G) space left.
+ $ df
+Filesystem           1K-blocks      Used Available Use% Mounted on
+/dev/sda2              6731740   3655316   2734460  58% /
+udev                    243312         4    243308   1% /dev
+tmpfs                   100892       884    100008   1% /run
+none                      5120         0      5120   0% /run/lock
+none                    252224       112    252112   1% /run/shm
+/dev/sda1               467367     24087    418346   6% /boot
+</PRE>
+
+<h3>Shameful Kvm Ubuntu-based Virtual Machine</h3>
+
+<P> <b>Note: (02/25/2012)</b> For ubuntu, sorry, network-manager, network-manager-gnome, 
+and gnome-core are intertwined!!  We are not able to purge these two packages.  We can 
+only edit the <code>/etc/network/interfaces</code> files as follow and then we are able 
+to start it as kvm daemon process via, say, <b>start-Kvm-001-1-AsDaemon</b>.
+
+<PRE>
+ $ more /etc/network/interfaces 
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+# The loopback network interface
+# auto lo
+# iface lo inet loopback
+
+# The primary network interface
+# auto eth0
+# iface eth0 inet dhcp
+
+# The loopback network interface
+auto lo
+iface lo inet loopback 
+address 127.0.0.1 
+netmask 255.0.0.0 
+
+auto eth0 
+iface eth0 inet static 
+        address 192.168.0.253
+        netmask 255.255.255.0
+        gateway 192.168.0.1
+</PRE>
+
+<a name="KvmTemplate"></a><h3>Kvm Template Creation</h3>
+  <OL>
+    <LI> $ cd /src3/KVM #We use /src3/KVM directory for kvm business
+    <LI> $ egrep '(vmx|svm)' --color=always /proc/cpuinfo # Hardware Assisted Virtual
+    <LI> $ sudo apt-get install kvm
+    <LI> $ sudo adduser hsu kvm
+    <LI> $ sudo apt-get install socat # Socket cat for sending stream via socket.
+
+<P> Now, we use <b>socat</b> to send <b>system_powerdown</b> to MonSock (Monitoring
+    Socket, created via "-monitor unix:${Socket-File-Path},server,nowait" option of 
+    <b>kvm</b> command).  If <b>acpid</b> (Advanced Configuration and Power Interface 
+    event daemon) is running in the virtual machine, the virtual machine will be 
+    shutdown (wishfully!) gracefully.  Othrwise, we still <b>ssh</b> proper shutdown 
+    command to the VM.
+    <LI> Get Mini ISO from Ubuntu or Debian:
+
+        <UL>
+          <LI> Ubuntu: 
+            <a href="https://help.ubuntu.com/community/Installation/MinimalCD">Ubuntu 
+            Mini Iso</a>.  Here, we renamed it as "mini.iso". 
+          <LI> <a href="http://cdimage.debian.org/debian-cd/current/amd64/iso-cd/"
+               target="newwindow">Current Debian Iso</a>
+          <LI> Debian: $ wget http://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-6.0.4-amd64-netinst.iso (2012/04/13)
+</UL>
+
+         <P> At home, Ubuntu can not be installed in my new system.  I tried and 
+             successfully installed Debian Lenny on it.  For <b>kvm</b> testing, 
+             I installed Ubuntu.img.  All the nightmares we encountered in the past
+             while we were running linux.uml based on Ubuntu reappear constantly.
+             How I hated it!  <b>Note:</b> If you try Ubuntu, after your first login, 
+             remember to execute the recover70rules shell script in the home directory
+             right away.  Otherwise, next time you won't have network anymore.
+             Unfortunately, for Debian systems (06/23/2010), we need to run this 
+             script, too.  Otherwise, next time, eth0 will be changed to eth1, and 
+             the network will no longer be available.
+<PRE>
+$ sudo ./recover70rules
+</PRE>
+
+         <P> You are lucky! I suggest that you adopt this web page via Debian route!
+    <LI> $ sudo apt-get install qemu
+    <LI> $ qemu-img create Ubuntu.img 5G or $ qemu-img create DebSqz-Mini.img 2G
+    <LI> $ kvm -cdrom mini.iso Ubuntu.img or $ kvm -cdrom debian-6.0.4-amd64-netinst.iso  DebSqz-Mini.img
+
+     <P> <b>Note: (07/28/2011)</b>
+
+<OL>
+  <LI> Partition the image as: /boot and /
+
+  <P> Give 512M to boot, turn on its boot flag, use ext2 filesystem format. The rest 
+      for / partition, use ext4  filesystem format. Install only the minimal packages 
+      offered by the installation menu, but must include openssh-server, since we 
+      need to login the VM via <b>ssh</b>.
+
+
+  <P> When mounting image file via loopback device: First mount / to /mnt/tmp 
+   (<b>offset=511705088</b>, [= 999424 x 512]), then we mount /boot to /mnt/tmp/boot
+   (<b>offset=1048576</b>, [= 2048 x 512]).
+
+<PRE>
+$ /sbin/fdisk -l Debian-Mini.img
+
+Disk Debian-Mini.img: 2147 MB, 2147483648 bytes
+255 heads, 63 sectors/track, 261 cylinders, total 4194304 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk identifier: 0x0006bf7e
+
+          Device Boot      Start         End      Blocks   Id  System
+Debian-Mini.img1   *        2048      999423      498688   83  Linux
+Debian-Mini.img2          999424     4192255     1596416   83  Linux
+$ sudo mount -o loop,offset=511705088 DebSqz-Mini.img /mnt/tmp
+$ sudo mount -o loop,offset=1048576 DebSqz-Mini.img /mnt/tmp/boot
+</PRE>
+
+  <LI> Old KVM images, such as Hurd and Minix, can be run by new KVM.
+  <LI> New kvm only can be run if host is running Linux kernel 2.6.32.
+  <LI> Lucid need to be configured by Config-KVM-lucid, since the offset is different. 
+
+    <P> Since the size of /boot partition is fixed to be 512M nowadays, offset is 
+     512x999424=511705088, Config-KVM-lucid is no longer needed.
+
+  <LI> All the start* and stop* scripts can be auto-generated, now, except 
+       startKvmsAsDaemon. 
+</OL>
+
+     <P> <b>Note: (05/06/2010)</b> Adding the "-no-kvm" option! Otherwise, 
+<code>kvm_leave_lazy_mmu</code> message shows up and booting failed miserably!
+
+<PRE>
+ $ kvm -no-kvm -cdrom mini.iso Ubuntu.img
+</PRE>
+     <P> Install mini Ubuntu on Ubuntu.img.  The whole process mimics the usual 
+         system installation.  Also turn on the boot flag for /.  For Debian, only 
+         install standard pc (i.e. minimal installation).
+
+     <P> <b>Note: 04/17/2015:</b> Kept for reference purpose. (If host does not 
+         support <b>ext4</b> file system, we will not be able to mount the image 
+         to /mnt/tmp via loopback device.!) At the disk partitioning step, must 
+         edit <b>ext4</b> back to <b>ext3</b> file system, since not all of our 
+         physical host systems are supporting <b>ext4</b>, yet. 
+
+     <P> After system reboot, either as a super user or sudo, install emacs21 and 
+         openssh-server packages right away.  After shut down the installation 
+         process, we will be temporarily out of inet service until we properly 
+         configure our network.  The reasons: Our kvm will be accessed mainly via 
+         ssh, hence ssh server must be ready.  Emacs will be our main editing tool.
+
+<PRE>
+ $ su
+ # apt-get install openssh-server
+ # apt-get install emacs21
+</PRE>
+
+     <P> <b>Note: (08/12/2010)</b> For Ubuntu, <b>sudo</b> package gets installed 
+automatically.  For Debian, we need this package for shutting kvm down remotely.
+Hence, install this package and allow ourselves to use sudo command:
+
+<PRE>
+ # apt-get install sudo
+ # adduser $USER sudo
+</PRE>
+
+<PRE>
+# id - print real and effective user and group IDs.  This shows that as user hsu, 
+# I am allowed to execute sudo, kvm, etc.   (I remembered this takes effect only 
+# after you logout and login again.)
+$ id
+uid=1000(hsu) gid=1000(hsu) groups=1000(hsu),20(dialout),24(cdrom),25(floppy),
+27(sudo),29(audio),44(video),46(plugdev),104(scanner),111(netdev),112(fuse),
+116(powerdev),118(kvm),122(libvirt)
+</PRE>
+
+
+    <LI> $ sudo mount -o loop<b>,offset=32256</b> Ubuntu.img /mnt/tmp
+
+<p> Reference: <a href="http://wiki.edseek.com/guide:mount_loopback">Mounting disk 
+images on Linux loopback device</a>
+
+<PRE>
+sudo mount -o loop,offset=32256 ../Debian-sqz.img /mnt/tmp
+</PRE>
+
+<PRE>
+# 32256 = 63*512, the 0-th track is used for MBR (Master Boot Record).
+$ /sbin/fdisk -l  Debian-sqz.img
+You must set cylinders.
+You can do this from the extra functions menu.
+
+Disk Debian-sqz.img: 0 MB, 0 bytes
+255 heads, 63 sectors/track, 0 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk identifier: 0x00051fff
+
+         Device Boot      Start         End      Blocks   Id  System
+Debian-sqz.img1   *           1         617     4956021   83  Linux
+Debian-sqz.img2             618         652      281137+   5  Extended
+Debian-sqz.img5             618         652      281106   82  Linux swap / Solaris
+hsu@debian-gateway:/src3/KVM$  /sbin/fdisk -l -u -C 652 Debian-sqz.img
+
+Disk Debian-sqz.img: 0 MB, 0 bytes
+255 heads, 63 sectors/track, 652 cylinders, total 0 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk identifier: 0x00051fff
+
+         Device Boot      Start         End      Blocks   Id  System
+Debian-sqz.img1   *          63     9912104     4956021   83  Linux
+Debian-sqz.img2         9912105    10474379      281137+   5  Extended
+Debian-sqz.img5         9912168    10474379      281106   82  Linux swap / Solaris
+</PRE>
+
+<h3>Note on Lucid (05/07/2010)</h3>
+
+<P> <B>Note: (08/12/2010)</B> I was told that even for the newer Debian System 
+(Squeeze), the offset should be 1048576!  My Debian-sqz.img was created in 
+Debian/Lenny and upgraded to Squeeze and Sid.  I have two bootable kernels (Lenny 
+and Squeeze) in it.  We must be careful for its grub.cfg.  Lenny refers its hard 
+disk device by <code>/dev/hda</code>, Squeeze refers it by <code>/dev/sda</code>.  
+<b>update-grub</b> command produces the wrong output with respect to this harddisk 
+device, hence lenny is not bootable, unless we edit it by hand.
+
+<PRE>
+$ /sbin/fdisk -l Ubuntu.img
+
+Disk Ubuntu.img: 5368 MB, 5368709120 bytes
+255 heads, 63 sectors/track, 652 cylinders, total 10485760 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk identifier: 0x0004678a
+
+     Device Boot      Start         End      Blocks   Id  System
+Ubuntu.img1   *        2048     9920511     4959232   83  Linux
+Ubuntu.img2         9922558    10483711      280577    5  Extended
+Ubuntu.img5         9922560    10483711      280576   82  Linux swap / Solaris
+#######################################################
+#  Offset= 512 * 2048 = 1048576
+#######################################################
+$ sudo mount -t ext3 -o loop,offset=1048576 Ubuntu.img /mnt/tmp
+</PRE>
+
+<PRE>
+$ ls -l /mnt/tmp
+total 88
+drwxr-xr-x  2 root root  4096 Jun 29 18:32 bin
+drwxr-xr-x  3 root root  4096 Jun 29 18:37 boot
+lrwxrwxrwx  1 root root    11 Jun 29 17:17 cdrom -> media/cdrom
+drwxr-xr-x  4 root root  4096 Jun 29 17:21 dev
+drwxr-xr-x 71 root root  4096 Jun 29 18:39 etc
+drwxr-xr-x  3 root root  4096 Jun 29 18:37 home
+lrwxrwxrwx  1 root root    33 Jun 29 17:25 initrd.img -> boot/initrd.img-2.6.28-13-generic
+drwxr-xr-x 12 root root  4096 Jun 29 18:33 lib
+lrwxrwxrwx  1 root root     4 Jun 29 17:20 lib64 -> /lib
+drwx------  2 root root 16384 Jun 29 17:17 lost+found
+drwxr-xr-x  3 root root  4096 Jun 29 17:17 media
+drwxr-xr-x  2 root root  4096 Apr 13 17:33 mnt
+drwxr-xr-x  2 root root  4096 Jun 29 17:20 opt
+drwxr-xr-x  2 root root  4096 Apr 13 17:33 proc
+drwx------  2 root root  4096 Jun 29 17:20 root
+drwxr-xr-x  2 root root  4096 Jun 29 18:37 sbin
+drwxr-xr-x  2 root root  4096 Mar  7 01:16 selinux
+drwxr-xr-x  2 root root  4096 Jun 29 17:20 srv
+drwxr-xr-x  2 root root  4096 Mar 31 17:11 sys
+drwxrwxrwt  4 root root  4096 Jun 29 18:38 tmp
+drwxr-xr-x 11 root root  4096 Jun 29 18:32 usr
+drwxr-xr-x 13 root root  4096 Jun 29 17:20 var
+lrwxrwxrwx  1 root root    30 Jun 29 17:25 vmlinuz -> boot/vmlinuz-2.6.28-13-generic
+$ ls -l /mnt/tmp/boot
+total 13620
+-rw-r--r-- 1 root root 1863507 Jun  2 17:24 System.map-2.6.28-13-generic
+-rw-r--r-- 1 root root  524602 Jun  2 17:24 abi-2.6.28-13-generic
+-rw-r--r-- 1 root root   90557 Jun  2 17:24 config-2.6.28-13-generic
+drwxr-xr-x 2 root root    4096 Jun 29 18:37 grub
+-rw-r--r-- 1 root root 7776217 Jun 29 18:37 initrd.img-2.6.28-13-generic
+-rw-r--r-- 1 root root  128796 Mar 28 04:12 memtest86+.bin
+-rw-r--r-- 1 root root    1170 Jun  2 17:27 vmcoreinfo-2.6.28-13-generic
+-rw-r--r-- 1 root root 3509024 Jun  2 17:24 vmlinuz-2.6.28-13-generic
+</PRE>
+
+<LI> System Files Configurtion:
+
+<P> Only the following five files need to be modified by hand.  The rest will be 
+    done via shell script  <b>bin/Config-KVM</b>.  However, We must check all the 
+    files the first time we install it.  We make sure everything is OK, since we 
+    will clone all our virtual machines based on this one.
+
+<table frame=3 border=2>
+  <tr><td>/mnt/tmp/etc/network/interfaces&nbsp;&nbsp;
+      <td>/mnt/tmp/etc/apt/sources.list
+  <tr><td>/mnt/tmp/etc/ssh/sshd_config
+      <td>/mnt/tmp/etc/ssh/ssh_config
+  <tr><td>/mnt/tmp/etc/resolv.conf
+</table>
+<OL>
+    <LI> Edit the /mnt/tmp/etc/network/interfaces file:
+
+<P> We may bring up eth0 via /etc/rc.local.  Also, we prefer to arrange our IP 
+  address instead of relying upon dhcp, since usually it is too late after we get 
+  valid IP address from 192.168.0.1, our dhcp server (ac15).
+
+<PRE>
+$ diff  /mnt/tmp/etc/network/interfaces /mnt/tmp/etc/network/interfaces.orig
+9,10c9,10
+< # auto eth0
+< # iface eth0 inet dhcp
+---
+> auto eth0
+> iface eth0 inet dhcp
+#############################################################################
+#  Note: (02/26/2012)
+#  Ubuntu network-manager, network-manager-gnome, and gnome-core are interwoven. 
+#  In LinuxMint, we can purge network-manager and network-manager-gnome, but not 
+#  Ubuntu.  The only way to get ethernet working in Ubuntu is by editing its 
+#  /etc/network/interfaces file as follow:
+#############################################################################
+$ diff /etc/network/interfaces /etc/network/interfaces.orig
+14,22c14
+< iface lo inet loopback 
+< address 127.0.0.1 
+< netmask 255.0.0.0 
+< 
+< auto eth0 
+< iface eth0 inet static 
+<         address 192.168.0.253
+<         netmask 255.255.255.0
+<         gateway 192.168.0.1
+---
+> iface lo inet loopback
+</PRE>
+
+<LI> For the /mnt/tmp/etc/apt/sources.list file of Ubuntu.img, we don't want to enable 
+     the <b>deb-src</b> entries.
+
+<PRE>
+$ diff /mnt/tmp/etc/apt/sources.list /mnt/tmp/etc/apt/sources.list.orig
+8c8
+< # deb-src http://tw.archive.ubuntu.com/ubuntu/ jaunty main restricted
+---
+> deb-src http://tw.archive.ubuntu.com/ubuntu/ jaunty main restricted
+13c13
+< # deb-src http://tw.archive.ubuntu.com/ubuntu/ jaunty-updates main restricted
+---
+> deb-src http://tw.archive.ubuntu.com/ubuntu/ jaunty-updates main restricted
+19c19
+< # deb-src http://tw.archive.ubuntu.com/ubuntu/ jaunty universe
+---
+> deb-src http://tw.archive.ubuntu.com/ubuntu/ jaunty universe
+21c21
+< # deb-src http://tw.archive.ubuntu.com/ubuntu/ jaunty-updates universe
+---
+> deb-src http://tw.archive.ubuntu.com/ubuntu/ jaunty-updates universe
+29c29
+< # deb-src http://tw.archive.ubuntu.com/ubuntu/ jaunty multiverse
+---
+> deb-src http://tw.archive.ubuntu.com/ubuntu/ jaunty multiverse
+31c31
+< # deb-src http://tw.archive.ubuntu.com/ubuntu/ jaunty-updates multiverse
+---
+> deb-src http://tw.archive.ubuntu.com/ubuntu/ jaunty-updates multiverse
+51c51
+< # deb-src http://security.ubuntu.com/ubuntu jaunty-security main restricted
+---
+> deb-src http://security.ubuntu.com/ubuntu jaunty-security main restricted
+53c53
+< # deb-src http://security.ubuntu.com/ubuntu jaunty-security universe
+---
+> deb-src http://security.ubuntu.com/ubuntu jaunty-security universe
+55c55
+< # deb-src http://security.ubuntu.com/ubuntu jaunty-security multiverse
+---
+> deb-src http://security.ubuntu.com/ubuntu jaunty-security multiverse
+</PRE>
+
+    <LI> Edit the /mnt/tmp/etc/ssh/sshd_config file:
+
+<P> No root login for any ssh session.
+<PRE>
+$ diff /mnt/tmp/etc/ssh/sshd_config /mnt/tmp/etc/ssh/sshd_config.orig
+26c26
+< PermitRootLogin no
+---
+> PermitRootLogin yes
+</PRE>
+    <LI> Edit the /mnt/tmp/etc/ssh/ssh_config file:
+
+<P> Allow Trusted X11 events passing and ssh login via port 22.
+<PRE>
+$ diff /mnt/tmp/etc/ssh/ssh_config /mnt/tmp/etc/ssh/ssh_config.orig
+22c22
+< ForwardX11Trusted yes
+---
+> #   ForwardX11Trusted yes
+39c39
+< Port 22
+---
+> #   Port 22
+</PRE>
+
+
+<LI> <b>/mnt/tmp/etc/resolv.conf</b>: Domain name server need to be modified:
+
+<P> The second one may be copied from the first name server of physical host.
+<PRE>
+$ diff  /mnt/tmp/etc/resolv.conf /mnt/tmp/etc/resolv.conf.orig
+1,3c1
+< search fhsu.edu
+< nameserver 168.95.192.1
+< nameserver 140.120.1.2
+---
+> nameserver 10.0.2.3
+</PRE>
+
+<LI> <b>/mnt/tmp/etc/hosts</b>
+
+<P> It seems only the hostname of the following line need to be modified:
+<PRE>
+127.0.1.1	kvm-001
+</PRE>
+
+<LI> <b>/mnt/tmp/etc/hostname</b>: Must be modified individually.
+
+<P> 
+<LI> <b>/mnt/tmp/etc/fstab</b>: Must be modified individually.
+
+<P> I can't understand the ubuntu version of this file. <b>Note: (07/04/09)</b>
+    I noticed that the <code>/dev/disk/by-uuid</code> directory exists in the 
+    virtual machine.  When, why, and how I got it? I have no idea. 
+
+<PRE>
+# I can't find the UUIDs 1dfdfe8f-2f74-4f6c-bc0f-39bffb075fbd and 
+# b0bd0d39-2bf1-4793-ad57-421be9fbc8b1 for / and swap, either in 
+# the physical host or the virtual machine.  Ubuntu must be 
+# condemned. Long life, debian!
+$ cat /mnt/tmp/etc/fstab
+# /etc/fstab: static file system information.
+#
+# Use 'vol_id --uuid' to print the universally unique identifier for a
+# device; this may be used with UUID= as a more robust way to name devices
+# that works even if disks are added and removed. See fstab(5).
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+proc            /proc           proc    defaults        0       0
+# / was on /dev/sda1 during installation
+UUID=1dfdfe8f-2f74-4f6c-bc0f-39bffb075fbd /  ext3  relatime,errors=remount-ro 0 1
+# swap was on /dev/sda5 during installation
+UUID=b0bd0d39-2bf1-4793-ad57-421be9fbc8b1 none  swap    sw    0     0
+/dev/scd0       /media/cdrom0   udf,iso9660 user,noauto,exec,utf8 0       0
+
+#Debian Kqemu /mnt/tmp/etc/fstab file. (Replacing string "hd" by "sd" and hdc by scd?)
+$ more /mnt/tmp/etc/fstab
+# /etc/fstab: static file system information.
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+proc            /proc           proc    defaults        0       0
+/dev/hda1       /               ext3    errors=remount-ro 0       1
+/dev/hda5       none            swap    sw              0       0
+/dev/hdc        /media/cdrom0   udf,iso9660 user,noauto     0       0
+</PRE>
+
+<LI> <b>/mnt/tmp/etc/inittab</b>
+
+<P> Ubuntu does not use this file.  For debian, it is a standard one.  You may get it 
+    from any proper UML setup.
+</OL>
+
+<LI> Bring up kvm-001 and shut it down:
+
+<PRE>
+$ sudo umount /mnt/tmp
+$ kvm Ubuntu.img
+# In the kvm-001
+$ sudo apt-get update # Failed, network is not ready yet.
+# The size of minimal system installation:
+$ df
+/dev/sda1 2901572K 678036K 2076144K 25%
+# As usual, sudo mkdir /src2 /usr/local
+# Shutdown the virtual machine
+$ sudo init 0
+</PRE>
+
+<P> <b>Note: (08/12/2010)</b> Enable Lucid's network by booting it, and from its 
+console's menubar, fork an xterm.  In the newly forked xterm, type 
+<b>sudo /etc/rc.local</b> to forcefully execute this local run command script.
+After this, network should be ready.  This is the only way I know to enable
+lucid's network.  We hence can not run lucid in the background and surely, we
+can not run it as a daemon.  Also, after configuration, add <b>-m 800</b> to 
+increase its memory size to 800MB.  Otherwise, memory swapping will slow it down
+to unbearable pace.
+
+<P>  <b>Note: (08/12/2010)</b> We can <b>Not</b> use start*-AsDaemon script for 
+Ubuntu image, since the <code>/etc/rc.local</code> script will not be executed and 
+hence the network will not be ready during the booting process.  We must issue 
+"sudo /etc/rc.local" to bring up the network from its console or the xterm forked 
+under its console.  Otherwise, Ubuntu image will be an isolated island without network.
+
+<PRE>
+$ diff start-kvm-001 start-kvm-001.bkp
+22c22
+< kvm -net vde,vlan=0,sock=/src3/KVM/network-4736 -net nic,vlan=0,macaddr=00:01:29:74:71:a5 -m 800 -hda ../Ubuntu.img &
+---
+> kvm -net vde,vlan=0,sock=/src3/KVM/network-4736 -net nic,vlan=0,macaddr=00:01:29:74:71:a5 -hda ../Ubuntu.img &
+</PRE>
+
+<P> <b>Note: (05/07/2010)</b> Lucid can only be installed and started with  "-no-kvm" 
+  option.  It runs in realy slow pace.  Memory requirement: at least 640M, swap space 
+  is used if we give it 512M. At system startup, the <b>/etc/rc.local</b> is no 
+  longer invoked by the kernel, hence network setting cannot be done in this file 
+  anymore.  Also, the worst news is that it seems Debian pick up the lucid kvm and 
+  kernel source from Ubuntu.  All the bad things we encountered in Ubuntu are 
+  bounded to show up in Debian system! What a nightmare!
+
+<LI> Setting up virtual network via switch:
+
+<P> <b>vde:</b> Virtual Distributed Ethernet, vde2 package was automatically installed 
+     in Debian.  For each virtual machine, it needs a fake MAC address.  The Debian 
+     <b>macchanger</b> package is useless.  All it does is changing the MAC address 
+     of the physical ether card.  Our <b>bin/FakeMac.sh</b> shell script provides 
+     us a random MAC address, so far so good.
+
+<P> <b>vde_switch</b> is a generalization of the <b>uml_switch</b> command.  We are 
+    lucky that we have enough experience on running UML virtual machines.  It is 
+    rather easy to adopt all the tools we developed for automating UML deployment.
+
+<LI> bin/Config-KVM
+
+<PRE>
+ $ Config-KVM ../Ubuntu.img kvm-001 192.168.0.253 eth1
+</PRE>
+
+   <P> Output: 
+<UL>
+    <LI> <b>start-kvm-001:</b> Setting up network (switch) and start the virtual machine.
+   <LI> <b>start-kvm-001-AsDaemon:</b> Using GNU screen command to run kvm-001 in 
+        the background.  Useless script, since lucid's network will not be enabled,
+        since during booting, at the final stage, /etc/rc.local does not get executed.
+    <LI> <b>start-kvm-001-efs:</b> 
+
+<P> The only difference is <b>efs</b>, exporting the host disk to virtual machine.
+    After virtual machine is up, mount the necessary filesystems by ourselves.
+    <LI> <b>stop-kvm-001-restore-lan:</b>  
+
+<p> Using <b>ping</b> to test whether kvm-001 is still alive.  If so, 
+    shut down it via "init 0".  After shutting down the virtual machine, 
+    restore the lan.  <b>Note: (08/13/2010)</b> Can NOT shut down hurd this way, 
+    since "init" cammand is not working in Hurd.
+<p> <b>Note: (08/13/2010)</b> The <b>halt</b> command shutdown hurd allright, but 
+    not gracefully!  The following command will shutdown hurd, but it also hangs 
+    the terminal.  We can use <b>start-Hurd-AsDaemon</b> to run hurd in the 
+    background, use the next command line in a terminal to shut it down.  But the 
+    terminal need to be closed by hand.  In new terminal, use the 
+
+<PRE>
+ $ ssh -t hsu@192.168.0.252 'sudo /sbin/poweroff' # In some terminal, and this terminal hangs!
+ $ stop-Hurd-restore-lan # In another terminal, this command restores lan.
+ # Afterward, we close qemu console manually.  Same thing happens in Minix3!
+ # But, Minix3 will automatically shut the qemu console down.
+</PRE>
+</UL>
+
+   <P> Apparently, <b>vde</b> project adopts the techniques developed in <b>uml</b>  
+     to other virtualization methods.  Our <b>bin/Config-Kvm</b> script is adopted 
+     from the <b>Config-UML-Rfs</b> and <b>ac15:/src4/mln/bin/PreparingLanFiles</b>
+     scripts.  It will automatically prepare the start and stop KVM virtual machine
+     scripts for us.
+
+   <P> Filesystem sharing between the physical hosts and their virtual machines
+       is rather useful from the system administration view point.  We do appreciate 
+       the <b>hostfs</b> facility in UML.  It is not available in kvm.  How to 
+       recover our loss?
+
+   <P> <b>Note: (07/05/2009)</b> At the end of <b>vdekvm</b> command, we append 
+  the string "-hdb /dev/sda", then the whole host disk will be available to the
+  guest as /dev/sdb, /dev/sdb1, etc.  We than mount the filesystems we need.
+  But, somewhere I read this is dangerous, and I think so, too.  If power failure?
+  It is possible that our /boot filesystem could be damaged.  If we only share
+  something like /usr/local, /src2, i.e. not system critical filesystems, such as 
+  /, /boot, /usr, I would be more comfortable!
+
+
+<PRE>
+$ diff  start-kvm-001 start-kvm-001-efs
+21c21,23
+< vdekvm -net vde,vlan=0,sock=/src3/KVM/network3851 -net nic,vlan=0,macaddr=00:01:29:fe:80:fc -hda ../Ubuntu.img &
+---
+> echo "After kvm-001 is up, mount /usr/local and /src2 by hand..."
+> echo "     The commands are in /etc/rc.local"
+> vdekvm -net vde,vlan=0,sock=/src3/KVM/network3851 -net nic,vlan=0,macaddr=00:01:29:fe:80:fc -hda ../Ubuntu.img -hdb /dev/sda&
+</PRE>
+
+  <P> The next command session is done in kvm-001 virtual machine.
+<PRE>
+$ ls -l /dev/sd*
+brw-rw---- 1 root disk 8,  0 2009-07-05 16:08 /dev/sda
+brw-rw---- 1 root disk 8,  1 2009-07-05 16:08 /dev/sda1
+brw-rw---- 1 root disk 8,  2 2009-07-05 16:08 /dev/sda2
+brw-rw---- 1 root disk 8,  5 2009-07-05 16:08 /dev/sda5
+brw-rw---- 1 root disk 8, 16 2009-07-05 16:08 /dev/sdb
+brw-rw---- 1 root disk 8, 17 2009-07-05 16:08 /dev/sdb1
+brw-rw---- 1 root disk 8, 26 2009-07-05 16:08 /dev/sdb10
+brw-rw---- 1 root disk 8, 27 2009-07-05 16:08 /dev/sdb11
+brw-rw---- 1 root disk 8, 28 2009-07-05 16:08 /dev/sdb12
+brw-rw---- 1 root disk 8, 29 2009-07-05 16:08 /dev/sdb13
+brw-rw---- 1 root disk 8, 30 2009-07-05 16:08 /dev/sdb14
+brw-rw---- 1 root disk 8, 31 2009-07-05 16:08 /dev/sdb15
+brw-rw---- 1 root disk 8, 18 2009-07-05 16:08 /dev/sdb2
+brw-rw---- 1 root disk 8, 19 2009-07-05 16:08 /dev/sdb3
+brw-rw---- 1 root disk 8, 20 2009-07-05 16:08 /dev/sdb4
+brw-rw---- 1 root disk 8, 21 2009-07-05 16:08 /dev/sdb5
+brw-rw---- 1 root disk 8, 22 2009-07-05 16:08 /dev/sdb6
+brw-rw---- 1 root disk 8, 23 2009-07-05 16:08 /dev/sdb7
+brw-rw---- 1 root disk 8, 24 2009-07-05 16:08 /dev/sdb8
+brw-rw---- 1 root disk 8, 25 2009-07-05 16:08 /dev/sdb9
+$ sudo mount -o ro /dev/sdb6 /usr/local # mount /usr/local read-only
+hsu@kvm-001:~$ ls -l /usr/local
+total 56
+drwxrwsr-x  2 root staff  4096 2009-06-27 22:56 bin
+drwxrwsr-x  2 root staff  4096 2009-06-27 15:03 etc
+drwxrwsr-x  2 root staff  4096 2009-06-27 15:03 games
+drwxrwsr-x  5 root staff  4096 2009-06-27 22:48 include
+drwxr-sr-x  2 root staff  4096 2009-06-27 22:29 info
+drwxrwsr-x  6 root staff  4096 2009-06-27 22:56 lib
+drwxr-sr-x  3 root staff  4096 2009-06-27 22:29 libexec
+drwx------  2 root root  16384 2009-06-27 15:00 lost+found
+lrwxrwxrwx  1 root staff     9 2009-06-27 15:03 man -> share/man
+drwxrwsr-x  2 root staff  4096 2009-06-27 15:03 sbin
+drwxrwsr-x 19 root staff  4096 2009-06-27 22:48 share
+drwxrwsr-x  2 root staff  4096 2009-06-27 15:03 src
+hsu@kvm-001:~$ ls -l /usr/local/bin
+total 24880
+-rwxr-xr-x 1 root staff    21332 2009-06-27 22:29 b2m
+-rwxr-xr-x 1 root staff      953 2009-06-27 16:11 bkp-src
+-rwxr-xr-x 1 root staff      144 2009-06-27 16:11 ch
+-rwxr-xr-x 1 root staff   255143 2009-06-27 22:29 ctags
+-rwxr-xr-x 1 root staff   108992 2009-06-27 22:29 ebrowse
+-rwxr-xr-t 2 root staff 11189349 2009-06-27 22:29 emacs
+-rwxr-xr-t 2 root staff 11189349 2009-06-27 22:29 emacs-21.4
+-rwxr-xr-x 1 root staff    26710 2009-06-27 22:29 emacsclient
+-rwxr-xr-x 1 root staff   258222 2009-06-27 22:50 esch
+-rwxr-xr-x 1 root staff   254348 2009-06-27 22:29 etags
+-rwxr-xr-x 1 root staff     1259 2009-06-27 16:11 findstr
+-rwxr-xr-x 1 root staff     6950 2009-06-27 22:29 grep-changelog
+-rwxr-xr-x 1 root staff    15059 2009-06-27 22:48 guile
+-rwxr-xr-x 1 root staff     9122 2009-06-27 22:48 guile-config
+-rwxr-xr-x 1 root staff     2907 2009-06-27 22:48 guile-snarf
+-rwxr-xr-x 1 root staff     2906 2009-06-27 22:48 guile-tools
+-rwxr-xr-x 1 root staff     1286 2009-06-27 16:11 IpTracing.sh
+-rwxr-xr-x 1 root staff     4997 2009-06-27 22:56 jacal
+-rwxr-xr-x 1 root staff     1049 2009-06-27 16:11 mntdevices
+-rwxr-xr-x 1 root staff     1439 2009-06-27 16:11 myld
+-rwxr-xr-x 1 root staff      271 2009-06-27 16:11 myxdvi
+-rwxr-xr-x 1 root staff   515111 2009-06-27 22:36 onsgmls
+-rwxr-xr-x 1 root staff   604849 2009-06-27 22:41 openjade
+-rwxr-xr-x 1 root staff   126539 2009-06-27 22:36 osgmlnorm
+-rwxr-xr-x 1 root staff   254715 2009-06-27 22:36 ospam
+-rwxr-xr-x 1 root staff    97216 2009-06-27 22:36 ospcat
+-rwxr-xr-x 1 root staff    56911 2009-06-27 22:36 ospent
+-rwxr-xr-x 1 root staff   299042 2009-06-27 22:36 osx
+-rwxr-xr-x 1 root staff     3963 2009-06-27 22:29 rcs-checkin
+-rwxr-xr-x 1 root staff     4470 2009-06-27 22:56 slib
+-rwxr-xr-x 1 root staff       40 2009-06-27 16:11 to
+-rwxr-xr-x 1 root staff      234 2009-06-27 16:11 tre2b
+-rwxr-xr-x 1 root staff      232 2009-06-27 16:11 xs
+-rwxr-xr-x 1 root staff      131 2009-06-27 16:11 xs2
+</PRE>
+
+<LI> Installing more packages:
+
+<P> After network is up, <b>scp</b> reinstallMyPkg and various DebianNet-pkgs.txt 
+    files to kvm-001:/tmp.  By using <b>reinstallMyPkg</b> script, we may set up 
+    our environment rather easily.
+
+<LI> How can we let kvm survive after logout (, not powerdown)?
+
+<P><b>Note: (08/12/2010)</b> We have <b>start*AsDaemon</b> script to run kvm in 
+the background now.  And our <b>stop-*-restore-lan</b> script automatically 
+check whether the virtual machine is still alive via <b>ping</b> command.
+If so, shut it down remotely.  We hence need <b>sudo</b> package in our virtual 
+machine.  <b>Note: (08/12/2010)</b> <b>start*AsDaemon</b> script does not 
+work for lucid, since we can <b>NOT</b> enable its network unless we execute 
+<b>sudo /etc/rc.local</b> command via its console.
+
+<P> In order to save energy, before we leave, we always logout and turn off our 
+monitor.  However, by default, kvm use SDL (Simple DirectMedia Layer) library
+(/usr/lib/libSDL*) to display its console.  After we logout, our vdekvm will be 
+gone, too.  Recall in UML, we use screen command to run it in background
+so that we don't see its console at all and, by this way, our uml survive after 
+we logout.
+
+<P> The <b>qemu</b> command has the "-curses" option to display its console in 
+text mode (via curses/ncurses interface).  This way, the <b>screen</b> command 
+can again be used to run <b>kvm, kqemu, qemu</b> in a detached session.  And 
+our <b>vdekvm</b> process will be able to survive after we logout.  This is 
+rather important, if our cluster is to be run for a long period. The 
+<b>startKvmsAsDaemon</b> shell script is designed for this purpose.
+
+
+<P> Howto reattach to our screen session? For more details, see 
+   <a href="http://140.120.7.20/LinuxRef/Tips/ScreenTutor.html">GNU Screen: A Short 
+Tutorial</a>
+
+<PRE>
+ $ sudo screen -x
+There are several suitable screens on:
+	3950.Kvm-001	(07/09/09 15:39:27)	(Detached)
+	3925.Kvm-001	(07/09/09 15:39:27)	(Detached)
+Type "screen [-d] -r [pid.]tty.host" to resume one of them.
+ $ sudo screen -x 3925.Kvm-001 # bring up screen for kvm-001
+ $ ctrl-a d # Issued in the screen to detach from it.
+ $ sudo screen -x 3950.Kvm-001 # bring up screen for kvm-002
+ # Login in, execute "sudo ./recover70rules" and "sudo init 0" will shut down kvm-002
+ # This would also close the screen running it.  Using same procedure to bring down 
+ # kvm-001.  Then we need to run *retore-lan script to get our lan back to its normal 
+ # state.  If we don't restore lan, next time we will be in difficult situation.
+</PRE>
+
+<a name="ResizeKvmRfs"></a><LI> Resize KVM Root Filesystem:
+
+<P> Since <b>qemu 0.13.0</b>, <b>qemu-img</b> command with resize option can grow 
+  or shrink the size of root filesystem image:
+
+<PRE>
+  $ qemu-img --help 
+  $ man qemu-img
+  # Apparently, it works for qcow2 file, too.
+  $ qemu-img resize vm-03.qcow2 +5G
+</PRE>
+
+<P> <b>Note: (07/14/2011)</b>
+
+<OL>
+  <LI> Reinstall Debian-Mini.img 2GB, failed.  Need more space?
+  <LI> Partition disk to /boot and /, 512M for /boot.
+
+     <b>offset=511705088</b>, (= 999424 x 512)
+<PRE>
+$ /sbin/fdisk -l Debian-Mini.img
+
+Disk Debian-Mini.img: 2147 MB, 2147483648 bytes
+255 heads, 63 sectors/track, 261 cylinders, total 4194304 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk identifier: 0x0006bf7e
+
+          Device Boot      Start         End      Blocks   Id  System
+Debian-Mini.img1   *        2048      999423      498688   83  Linux
+Debian-Mini.img2          <b>999424</b>     4192255     1596416   83  Linux
+</PRE>
+  <LI> cp Debian-Mini.img Debian-Gparted.img
+
+<P> Using Config-Kvm to configure Debian-Gparted.img.
+  <LI> <code>eth0: ERROR while getting interface flags: No such device</code>
+
+<P> Can get eth0 only after the next two commands! Each time, after booting, 
+   must login and execute "sudo ./recover70rules" in the home directory.
+   Otherwise, eth1, eth2, etc., will be the ethernet device, not eth0.
+
+<PRE>
+  # cd /etc/udev/rules.d
+  # mv 70-persistent-net.rules 70-persistent-net.rules.bkp 
+</PRE>
+
+  <LI> Install Minimal packages
+
+<PRE>
+ $ su
+ # aptitude update
+ # aptitude safe-upgrade
+ # apt-get install deborphan dnsutils emacs fail2ban geoip-bin less 
+ # apt-get install openssh-client openssh-server xterm
+ # apt-get install gparted uuid-runtime
+ $ df
+Filesystem           1K-blocks      Used Available Use% Mounted on
+/dev/sda2              1571304    735316    756168  50% /
+tmpfs                   254592         0    254592   0% /lib/init/rw
+udev                    249788        96    249692   1% /dev
+tmpfs                   254592         0    254592   0% /dev/shm
+/dev/sda1               467367     14876    427557   4% /boot
+</PRE>
+  <LI> locale: Cannot set LC_ALL to default locale: No such file or directory
+
+<PRE>
+ $ sudo dpkg-reconfigure locales
+choose "en_US.UTF-8 UTF-8"
+</PRE>
+
+  <LI> Modify start-Gparted-6-efs to start-Gparted-6-resizing
+
+<PRE>
+$ cat start-Gparted-6-resizing
+#! /bin/bash
+
+# Don't Edit, File automatically generated by Config-KVM script
+if [ $EUID -ne 0 ]
+   then sudo echo "Super User passwd, please:"
+        if [ $? -ne 0 ]
+          then  echo "Sorry, need su privilege!"
+                exit 1
+        fi
+fi
+
+###########################################################
+# Newly added lines
+###########################################################
+if [ $# != 1 ]
+  then echo "$0 image-to-be-resized"
+       exit 2
+fi
+
+ImageFile="no"
+file $1 | grep "boot sector"
+if [ $? = 0 ]
+  then ImageFile="yes"
+fi
+
+if [ ${ImageFile} = "no" ]
+  then echo "$1 is not an image file."
+       exit 3
+else echo "$1 is an image file."
+fi
+###########################################################
+
+sudo chmod 666 /dev/net/tun
+sudo tunctl -u hsu -t tap6
+sudo ifconfig tap6 192.168.0.33 netmask 255.255.255.255 up
+sudo iptables --table nat -A POSTROUTING --out-interface eth0 -j MASQUERADE
+sudo iptables -A FORWARD --in-interface tap6 -j ACCEPT
+sudo chmod 666 /dev/net/tun # First time only get 660
+sudo sysctl net.ipv4.ip_forward=1
+sudo sysctl net.ipv4.conf.tap6.proxy_arp=1
+sudo arp -Ds 192.168.0.248 eth0 pub
+sudo route add -host 192.168.0.248 dev tap6
+echo "Starting vde_switch..."
+vde_switch -tap tap6 -mod 644 -sock=/src3/KVM/network-3499 -mgmt /src3/KVM/network-3499/vde_switch.mgmt -daemon </dev/null >/dev/null
+echo "Starting VM: Gparted..., mem=512M"
+echo "After Gparted is up, mount /usr/local and /src2 by hand..."
+echo "     The commands are in /etc/rc.local"
+###########################################################
+# kvm -net vde,vlan=0,sock=/src3/KVM/network-3499 -net nic,vlan=0,macaddr=00:25:90:68:fa:a8 -m 512M -monitor unix:/src3/KVM/network-3499/MonSock,server,nowait -hda ../Resize/Debian-Gparted.img -hdb /dev/sda&
+###########################################################
+kvm -net vde,vlan=0,sock=/src3/KVM/network-3499 -net nic,vlan=0,macaddr=00:25:90:68:fa:a8 -m 512M -monitor unix:/src3/KVM/network-3499/MonSock,server,nowait -hda ../Resize/Debian-Gparted.img -hdb $1&
+</PRE>
+
+  <LI> Resizig Newly created KVM image as follow:
+
+<PRE>
+ # To guarantee the file blank.ext4 is totally blank.
+ $ dd if=/dev/zero of=./blank.ext4 bs=1024K count=1000
+ $ cat Debian-Mini.img blank.ext4 >>Debian-Resized.img
+ # Probably, the next two commands will be easier
+ # cp Debian-Mini.img Debian-Resized.img
+ # qemu-img resize Debian-Resized.img +1G
+ $ ls -l
+total 7440792
+-rw-r--r-- 1 hsu hsu 1048576000 Jul 15 07:24 blank.ext4
+-rw-r--r-- 1 hsu hsu  176160768 Jul 14 10:25 debian-6.0.4-amd64-netinst.iso
+-rw-r--r-- 1 hsu hsu 2147483648 Jul 15 08:39 Debian-Gparted.img
+-rw-r--r-- 1 hsu hsu 2147483648 Jul 14 11:22 Debian-Mini.img
+-rw-r--r-- 1 hsu hsu 3196059648 Jul 15 08:34 Debian-Resized.img
+ # From /src3/KVM/bin
+ $ start-Gparted-6-resizing ../Resize/Debian-Resized.img
+ # After remote login, with root privilege,
+ $ sudo gparted /dev/sdb
+ # You should be able to resize /dev/sdb2, unless the UUIDs conflict as follows:
+ ;; The UUIDs conflict due to the image of Gparted is a copy of Debian-Mini.img,
+ ;; so is the Debian-Resized.img image, although we add 1G disk space at the end.
+ # $ ls -l /dev/disk/by-uuid 
+ # lrwxrwxrwx 1 root root 10 Apr 21 21:17 055d3c20-ce24-45ec-8037-629812e18f04  -> ../../sdb2
+ # lrwxrwxrwx 1 root root 10 Apr 21 21:17 73b582f4-9d9a-424e-8989-ff8a7ba8bcb8  -> ../../sdb1
+ # In another xterm, mount ../Resize/Debian-Gparted.img, i.e. the /dev/sda2 and /dev/sda1
+ # for Gparted VM:
+ $ sudo mount -o loop,offset=511705088 ../Resize/Debian-Gparted.img /mnt/tmp
+ $ sudo mount -o loop,offset=1048576 ../Resize/Debian-Gparted.img /mnt/tmp/boot
+ $ more /mnt/tmp/boot/grub/grub.cfg
+   ...
+   search --no-floppy --fs-uuid --set=root 73b582f4-9d9a-424e-8989-ff8a7ba8bcb8
+   echo	'Loading Linux 3.2.0-2-amd64 ...'
+   linux /vmlinuz-3.2.0-2-amd64 root=UUID=055d3c20-ce24-45ec-8037-629812e18f04 ro quiet
+   ... 
+ $ sudo umount /mnt/tmp/boot /mnt/tmp
+ # If so, next step tells you how to deal with it.
+</PRE>
+
+  <LI> Change UUIDs for Gparted Filesystems.
+
+   <P> Since the image is duplicated from Debian-Mini.img, all the uuids are the same.
+<PRE>
+ $ start-Gparted-6
+ $ ls -l /dev/disk/by-uuid 
+ # Check the original UUID for /dev/sda1 and /dev/sda2 carefully.  You need to
+ # replace these UUIDs in the /boot/grub/grub.cfg and /etc/fstab files later on.
+ # Remote login gp and change the UUIDs for /dev/sda1 and /dev/sda2 as follows
+ # uuidgen | xargs tune2fs /dev/sda1 -U ; blkid /dev/sda1
+ # uuidgen | xargs tune2fs /dev/sda2 -U ; blkid /dev/sda2
+ Gparted:~$ ls -l /dev/disk/by-uuid
+ # Next, you must edit the UUIDs in the /boot/grub/grub.cfg and /etc/fstab files
+ # so that the VM can boot and mount the right filesystems.
+</PRE>
+</OL>
+
+<a name="CowTech"></a> <LI> Immediate Questions:
+<OL>
+  <LI> Benchmark for kvm
+  <LI> Integrate kvm virtualization into <b>mln</b>
+  <LI> Use <a href="http://140.120.7.20/LinuxRef/Cluster/Virtualization.html#OverLay"
+       target="newwindow">overlay technique</a> to populate a cluster.
+
+       <P> Shall we separate lan setup code from the virtual machine startup code in
+        our start-kvm* script, since lan setup code needs only to be executed once. I 
+        can create second virt machine: kvm-002 and prepare its startup script easily.
+        However, I need to start it with "kvm -hda kvm-002.ovl&" and edit 3 files
+        as follow before I can start it:
+
+<PRE>
+hsu@kvm-002:~$ find /etc -name "*~" 2>/dev/null
+/etc/hostname~
+/etc/rc.local~
+/etc/apt/trusted.gpg~
+/etc/hosts~
+hsu@kvm-002:~$ diff /etc/hostname /etc/hostname~
+1c1
+< kvm-002
+---
+> kvm-001
+hsu@kvm-002:~$ diff /etc/rc.local /etc/rc.local~
+19c19
+< ifconfig eth0 192.168.0.252
+---
+> ifconfig eth0 192.168.0.253
+hsu@kvm-002:~$ diff /etc/hosts /etc/hosts~
+2c2
+< 127.0.1.1       kvm-002
+---
+> 127.0.1.1       kvm-001
+</PRE>
+
+       <P> Creating second virtual machine:
+<PRE>
+$ qemu-img create -b Ubuntu.img -f qcow2 kvm-002.ovl
+$ file  kvm-002.ovl
+$ kvm -hda kvm-002.ovl 
+# Editing the above three files and preparing startup script:
+$ more bin/start-kvm-002
+#! /bin/bash
+
+if [ $EUID -ne 0 ]
+   then echo "You need super user privilege for this script"
+        exit 1
+fi
+
+sudo arp -Ds 192.168.0.252 eth1 pub
+sudo route add -host 192.168.0.252 dev tap0
+
+MACADDR=`./FakeMac.sh`
+echo "Starting VM: kvm-002... with Mac Address: ${MACADDR}"
+vdekvm -net vde,vlan=0,sock=/src3/KVM/network3851 -net nic,vlan=0,macaddr=${MACADDR} -hda ../kvm-002.ovl&
+</PRE>
+
+       <P> I think, at this stage, kvm-002 shares the basic booting image with kvm-001 
+(i.e. Ubuntu.img), but it keeps its own version of modified files.  Moreover, after 
+this stage, if you scp some file, such as DebianNetFiles/myterm, to kvm-001, you can 
+see it in the Ubuntu.img but not in kvm-002.ovl.  And, we can only use <b>kvm</b>
+command to boot kvm-002 to examine its filesystem, we can not mount it.
+
+       <P> The other problem I realize is:  If we system upgrade kvm-001, i.e. the 
+Ubuntu.img, kvm-002 probably would not get upgraded.  This is no good.  In the high 
+performance cluster, we would like our computing nodes to be very similar.  We can 
+always create a new overlay for each new computing node.  But for high availability 
+cluster, if we create a new overlay, all our students homework assignments, their 
+working environments, etc. would be lost completely.  It is rather serious problem!
+Everybody thinks about it.
+
+       <P> One more question in my mind:  It seems to me that in the field of computer 
+science, whenever we get new technology, we adopt it immediately.  But for <b>UML</b> 
+and <b>KVM</b>, can we abandon <b>UML</b> completely in our Topics of OS courses? 
+Don't forget that we adopt what we have learned in <b>UML</b> to <b>KVM</b> easily.
+Can we just forget about <b>UML</b> and go with <b>KVM</b>? <b>This question is rather
+important</b>, since we always don't have enough time for anything in these two courses!
+
+
+  <LI> Mounting KVM qcow2 and overlay images:
+
+<P> In order to be able to edit image files without booting the systems, we need to 
+    mount them.  This enables us to modify the above three files: /etc/hostname, 
+    /etc/hosts, /etc/rc.local by shell scripts.  Here is the way we may mount an 
+    overlay image:
+
+<PRE>
+ $ sudo modprobe nbd max_part=8
+ $ sudo kvm-nbd --connect=/dev/nbd0 kvm-002.ovl
+ $ sudo fdisk /dev/nbd0
+ $ sudo mount /dev/nbd0p1 /mnt/tmp
+ $ ls -l /mnt/tmp
+total 92
+drwxr-xr-x  2 root root  4096 Jun 29 18:32 bin
+drwxr-xr-x  3 root root  4096 Jul  3 15:57 boot
+lrwxrwxrwx  1 root root    11 Jun 29 17:17 cdrom -> media/cdrom
+drwxr-xr-x  4 root root  4096 Jun 29 17:21 dev
+drwxr-xr-x 75 root root  4096 Jul  9 16:03 etc
+drwxr-xr-x  3 root root  4096 Jun 29 18:37 home
+lrwxrwxrwx  1 root root    33 Jun 29 17:25 initrd.img -> boot/initrd.img-2.6.28-13-generic
+drwxr-xr-x 12 root root  4096 Jul  3 16:14 lib
+lrwxrwxrwx  1 root root     4 Jun 29 17:20 lib64 -> /lib
+drwx------  2 root root 16384 Jun 29 17:17 lost+found
+drwxr-xr-x  3 root root  4096 Jun 29 17:17 media
+drwxr-xr-x  2 root root  4096 Apr 13 17:33 mnt
+drwxr-xr-x  2 root root  4096 Jun 29 17:20 opt
+drwxr-xr-x  2 root root  4096 Apr 13 17:33 proc
+drwx------  2 root root  4096 Jun 29 17:20 root
+drwxr-xr-x  2 root root  4096 Jun 29 18:37 sbin
+drwxr-xr-x  2 root root  4096 Mar  7 01:16 selinux
+drwxr-xr-x  2 root root  4096 Jul  4 11:09 src2
+drwxr-xr-x  2 root root  4096 Jun 29 17:20 srv
+drwxr-xr-x  2 root root  4096 Mar 31 17:11 sys
+drwxrwxrwt  4 root root  4096 Jul  9 15:51 tmp
+drwxr-xr-x 11 root root  4096 Jun 29 18:32 usr
+drwxr-xr-x 13 root root  4096 Jun 29 17:20 var
+lrwxrwxrwx  1 root root    30 Jun 29 17:25 vmlinuz -> boot/vmlinuz-2.6.28-13-generic
+ $ sudo umount /mnt/tmp
+ $ sudo kvm-nbd --disconnect /dev/nbd0
+ $ sudo rmmod nbd
+ ###########################################################
+ # From the linux kernel source: Documentation/nbd.txt
+ ###########################################################
+ # 1	                Network Block Device (TCP version)
+ # 2	                                       
+ # 3   What is it: With this compiled in the kernel (or as a module), Linux
+ # 4   can use a remote server as one of its block devices. So every time
+ # 5   the client computer wants to read, e.g., /dev/nb0, it sends a
+ # 6   request over TCP to the server, which will reply with the data read.
+ # 7   This can be used for stations with low disk space (or even diskless -
+ # 8   if you boot from floppy) to borrow disk space from another computer.
+ # 9   Unlike NFS, it is possible to put any filesystem on it, etc. It should
+ # 10  even be possible to use NBD as a root filesystem (I've never tried),
+ # 11  but it requires a user-level program to be in the initrd to start.
+ # 12  It also allows you to run block-device in user land (making server
+ # 13  and client physically the same computer, communicating using loopback).
+ # 14	   
+ # 15  Current state: It currently works. Network block device is stable.
+ # 16  I originally thought that it was impossible to swap over TCP. It
+ # 17  turned out not to be true - swapping over TCP now works and seems
+ # 18  to be deadlock-free, but it requires heavy patches into Linux's
+ # 19  network layer.
+ # 20	   
+ # 21  For more information, or to download the nbd-client and nbd-server
+ # 22  tools, go to http://nbd.sf.net/.
+ # 23	
+ # 24  Howto: To setup nbd, you can simply do the following:
+ # 25	
+ # 26  First, serve a device or file from a remote server:
+ # 27	
+ # 28  nbd-server <port-number> <device-or-file-to-serve-to-client>
+ # 29	
+ # 30  e.g.,
+ # 31     root@server1 # nbd-server 1234 /dev/sdb1
+ # 32	
+ # 33     (serves sdb1 partition on TCP port 1234)
+ # 34	
+ # 35  Then, on the local (client) system:
+ # 36	
+ # 37  nbd-client <server-name-or-IP> <server-port-number> /dev/nb[0-n]
+ # 38	
+ # 39  e.g.,
+ # 40     root@client1 # nbd-client server1 1234 /dev/nb0
+ # 41	
+ # 42     (creates the nb0 device on client1)
+ # 43	
+ # 44  The nbd kernel module need only be installed on the client
+ # 45  system, as the nbd-server is completely in userspace. In fact,
+ # 46  the nbd-server has been successfully ported to other operating
+ # 47  systems, including Windows.
+ ###########################################################
+</PRE>
+
+  <LI> Write a shell script with a project name and a sequence of IP addresses 
+       as its arguments.  Your shell script needs to be able to automatically 
+       generate an overlay image for each IP address and produce the startProject 
+       and restore-lan-project shell scripts. I believe this should be an easy 
+       exercise!
+
+  <LI> Setup testing environment on ac10 upto ac13.  Don't use our high end machines
+       for testing deployment. Everybody will be better off.
+  <LI> We now know that Clonezilla is only good for backing up individual physical 
+       host. (Since in our working environment, we can not guarantee the hardware parts,
+       such as: ether card, etc., are always the same.) For virtual machine, since its 
+       hardware is virtualized, if we used it to backup virtual machines, can we migrate 
+       the image to other host?  How long does it take to backup a virtual machine?
+       Would the overlay technique be much easier?
+  <LI> I checked the builtin ether device in ac14 and ac15 are giga ether card.
+       Hence, the performance over real IP and virtual IP is about the same.
+       I think the new motherborad on ac11 has also a builtin giga ethercard.
+       And probably, the builtin ethercard (MCP55?) for ac13 would be 10/100 mega
+       card? 
+  <LI> Help Prof. Yen developing web page for Topics in OS courses (for Graduate Scool).
+  <LI> The contents of this summer's seminar:
+       <a href="http://140.120.7.20/LinuxRef/Cluster/Virtualization.html"
+        target="newwindow">Virtualization</a>
+  <LI> We still have one free motherboard, right?  Shall we get one more?  I think
+       soon or later, it would be phased out.  We need some spare parts in stock.
+</OL>
+    <LI> <a href="./HurdAndMinix3-Via-Kvm.html" target="newwindow">Hurd and Minix3 
+        via KVM</a>
+
+    <P> It is rather easy to adopt the above technique to emulate Minix3 in our 
+     environment.  Minix3 is 32 bit OS, our hosts are amd 64 bit architecture.
+     I am rather interested in this OS, since its microkernel based 3rd generation
+     OS.  The network business implemented in Minix3 caused severe headache.  But
+     it well worth it, since you get the chance to digest your network knowledge 
+     one more time.  
+
+    <LI> <a name="KvmSrc"></a>Kvm from source
+
+<P> Download qemu-kvm source from <a href="http://sourceforge.net/projects/kvm/files/" 
+        target="newwindow">qemu-kvm-*.tar.gz</a>.
+
+<PRE>
+ $ cd /src3/kernel
+ $ tar -zxvf $HOME/Downloads/qemu-kvm-0.15.1.tar.gz
+ $ cd qemu-kvm-0.15.1
+ $ mkdir objects; cd objects
+ $ emacs myconf&
+ $ cat myconf
+#! /bin/bash 
+
+../configure --prefix=/usr/local --source-path=.. --target-list=x86_64-linux-user,x86_64-softmmu --enable-kvm --enable-linux-user --enable-vde --enable-vhost-net --enable-docs
+ $ chmod 755 myconf 
+ # To find out the available options for configuration:
+ # $ ../configure --help 
+ $ myconf 
+ $ make 
+ $ echo $? 
+ # If return 0
+ $ sudo make install 
+ # No more kvm command? It seems the following is the command to replace kvm.  If so, 
+ # link qemu-system-x86_64 to kvm, probably, can do business as usual.
+ $ ls -l x86_64-softmmu/qemu-system-x86_64 
+ $ cd  x86_64-softmmu
+ $ qemu-system-x86_64 -hda /src3/KVM/Resize/Debian-Mini.img.
+ # Yes, it was tested.  It seems we can switch to qemu-kvm-0.15.0 and do business
+ # as usual.
+ $ sudo make install 
+ $ cd /usr/local/bin 
+ $ sudo ln -s qemu-system-x86_64 kvm
+ $ ls -lia /usr/local/bin/kvm /usr/local/bin/qemu-sys*
+963 lrwxrwxrwx 1 root root      18 Oct 20 21:28 /usr/local/bin/kvm -> qemu-system-x86_64
+966 -rwxr-xr-x 1 root root 3708192 Oct 20 21:24 /usr/local/bin/qemu-system-x86_64
+ $ cd /src3/kernel/qemu-kvm-0.15.1/objects 
+ $ make clean 
+ # If doing live migration, the version of kvm used in the source and destination
+ # hosts must be the same.  Otherwise, migration failed!  Don't purge the kvm 
+ # installed via debian.  Only do 
+ # "sudo mv /usr/local/bin/kvm /usr/local/bin/kvm.deb"
+</PRE>
+
+    <LI> References
+
+<P>
+<TABLE>
+  <TR><TD><a href="http://140.120.7.20/LinuxRef/Cluster/WebbasedKVMVirtulization.html" 
+           target="newwindow">Webbased Virtulization</a>
+      <TD><a href="http://140.120.7.20/LinuxRef/Cluster/MNLAutoManagement.html" 
+           target="newwindow">Management and Live Migration of VM</a>&nbsp;&nbsp;
+  <TR><TD><a href="http://www.linux-kvm.org/page/FAQ">KVM FAQ</a>
+      <TD><a href="http://www.linux-kvm.org/page/Main_Page">KVM: 
+            Main_Page</a>&nbsp;&nbsp;
+  <TR><TD><a href="http://www.linux-kvm.org/page/HOWTO">KVM: 
+            HOWTO</a>&nbsp;&nbsp;
+      <TD><a href="http://www.linux-kvm.org/page/Documents">KVM: 
+            Documents</a>&nbsp;&nbsp;
+  <TR><TD><a href="http://www.nongnu.org/qemu/qemu-doc.html">QEMU 
+           Documentation</a>&nbsp;&nbsp;
+      <TD><a href="http://swik.net/QEMU+Bridge">QEMU Bridge</a>&nbsp;&nbsp;
+  <TR><TD><a href="http://wiki.debian.org/QEMU#Networking">QEMU 
+           Networking</a>&nbsp;&nbsp;
+      <TD><a href="http://www.tu-harburg.de/~seal0689/html/bt.html">Migrating UML to 
+           KVM, etc. P5</a>&nbsp;&nbsp;
+  <TR><TD><a href="http://wiki.virtualsquare.org/index.php/Main_Page">VirtSqua:</a>
+      <TD><a href="/src1/LinuxRef/IMG/Vsquare_main.png">VirtSqua: tools & libraries</a>
+  <TR><TD><a href="/backup/KVM-tool/VDE.html">VDE</a>
+      <TD><a href="http://xcat.sourceforge.net/">Extreme Cloud Administration Tool</a>
+  <TR><TD><a href="http://xcat.wiki.sourceforge.net/KVM+">xcat: KVM+</a>
+      <TD><a href="http://www.virtuatopia.com/index.php/Main_Page">virtuatopia</a>
+  <TR><TD><a href="http://www.virtuatopia.com/index.php/An_Overview_of_Virtualization_and_VMware_Server_2.0">An Overview of Virtualization and VMware</a>
+      <TD><a href="http://wathsalav.blogspot.com/2008/09/howto-run-minix3-on-linux-with-kvm-and.html">Minix3 on KVM</a>
+  <TR><TD><a href=""></a>
+      <TD><a href=""></a>
+</TABLE>
+  </OL>
+<h3>KVM Managing</h3>
+
+<OL>
+  <LI>Libvirt Package: <a href="http://libvirt.org/">The virtualization API</a>
+<PRE>
+$ apt-cache search libvirt
+$ sudo apt-get install libvirt-bin
+$ ls -l /etc/libvirt
+$ which virsh
+# If prefer GUI management
+$ sudo apt-get install virt-manager # This will also install libvirt-bin
+# Allow us to use libvirt
+$ sudo adduser hsu libvirt
+</PRE>
+
+
+</OL>
+
+<h3>Reference</h3>
+
+<OL>
+  <LI><b>SIOCADDRT: No such process</b>
+
+<UL>
+ <LI><h5>Gateway on a different subnet on Linux
+<a href="http://www.adminsehow.com/2011/09/gateway-on-a-different-subnet-on-linux/" 
+rel="bookmark">(Source Origin)</a></h5>
+
+<p>Theoretically host IP and gateway should be on the same IP subnet. But there are 
+some situations where host IP and gateway subnet are on different subnets. Like my 
+situation today. I was assigned two additional IPs for my server by my Data-center, 
+but IPs were from a different subnet compared to server main IP. these IPs will work 
+if you set them as additional IPs. But I needed them to create two new VPS's on my 
+server with bridged network interface. In this situation additional IPs should serve 
+as main IP address and there is no gateway on same subnet available. So here are the 
+assumptions :</p>
+
+<p>a.b.c.d is the host IP<br>
+e.f.g.h is the gateway IP<br>
+a.b.c.d &amp; e.f.g.h are on different subnets.</p>
+
+<p>By default if you try to set gateway by following command, and you will get the 
+error:</p>
+
+<PRE>	
+ $ route add default gw e.f.g.h
+SIOCADDRT: No such process
+</PRE>	
+
+<p> The trick is simple, first add a route to default gateway itself and then set the 
+default gateway, like this. Remember you may need to change eth0 to your device name, 
+it may be eth1 or wlan0 or anything.</p>
+
+<PRE>	
+ $ route add e.f.g.h/32 dev eth0
+ $ route add default gw e.f.g.h
+</PRE>	
+
+<p><strong>How to make these route changes persistent?</strong></p>
+
+<p> For Debian/Ubuntu: Add the following lines to /etc/network/interfaces:</p>
+
+<PRE>	
+ $ post-up route add e.f.g.h/32 dev eth0
+ $ post-up route add default gw e.f.g.h 
+</PRE>	
+
+<p> For VMs, in the <code>/etc/rc.local</code> file, add the new line before setting 
+default gw:
+
+<PRE>
+ #################Line Added####################	
+ route add e.f.g.h/32 dev eth0
+ ###############################################	
+ route add default gw e.f.g.h 
+</PRE>	
+
+<LI><h5><b>Causes:</b> <a 
+href="http://www.symantec.com/business/support/index?page=content&id=TECH142841">(Source 
+Origin)</a></h5> 
+
+<P> There are multiple known causes for this error:
+
+<OL>
+  <LI> You attempted to set a route specific to an interface which was not up at the 
+       time you ran the command.
+
+  <LI> You attempted to set a route for a network before setting a host route for the 
+       gateway which handles traffic for that network.
+</OL>
+
+<h5>Solution:</h5>
+
+<P> At the CLI, type: 
+
+<PRE>
+ $ ifconfig
+</PRE>
+     
+<P> If the response shows that the interface you specified in the route command is in 
+    an UP state, then create a host route for the gateway and try to set the net route 
+    again.
+
+<OL>
+  <LI> To create a host route
+
+    <P> At the CLI, type: 
+
+<PRE>
+    route add -host IP_ADDRESS dev eth0
+</PRE>
+
+  <P> ... where IP_ADDRESS is the IP address of the gateway for the network and eth0 is 
+the actual device name for the ethernet device which connects to the network where the 
+gateway is installed.
+
+  <LI> To create a net route
+
+     <P> At the CLI, type: 
+
+<PRE>
+    route add -net IP_ADDRESS netmask NETMASK gw GATEWAY_IP dev eth0
+</PRE>
+
+  <P> ... where IP_ADDRESS is the IP address of the network, NETMASK is the subnet mask, 
+GATEWAY_IP is the IP address of the gateway machine, and eth0 is the actual interface 
+that connects to the network where the gateway is present.
+</OL>
+</UL>
+
+  <LI><b>TUNSETIFF: Device or resource busy</b>
+
+<P> It is plausible that some previous daemons are still running and holding tap 
+devices. Even if all virtual hosts show up correctly, the network would be broken. 
+On all physical hosts, run the command: ps alx | grep -e "uml_switch -tap tap0" or 
+ps alx | grep -e "-tap tap0" and sudo kill -2 pid ... to terminate the stale 
+deamons. 
+
+  <LI><b>One host, two or more IP addresses</b>
+
+<P> Can do this with the next two commands:
+
+<PRE>
+$ sudo ifconfig eth0:0 192.168.0.4
+$ sudo route add -host 192.168.0.4 dev eth0:0
+</PRE>
+
+<P> Replace that IP with the one you'd like to add.  This change will no longer be in 
+effect after rebooting.  Therefor you must add the two commands to the bottom of your 
+/etc/rc.local file. Your NIC should now be listening and responding on both this and 
+the original IP address found in /etc/sysconfig/network-scripts/ifcfg-eth0
+
+<P>If you want to add add more than one additional IP address, continue like this:
+
+<PRE>
+$ sudo ifconfig eth0:0 192.168.0.4
+$ sudo ifconfig eth0:1 192.168.0.5
+$ sudo ifconfig eth0:2 192.168.0.6
+$ sudo route add -host 192.168.0.4 dev eth0:0
+$ sudo route add -host 192.168.0.5 dev eth0:1
+$ sudo route add -host 192.168.0.6 dev eth0:2 
+</PRE>
+
+  <LI>Hope that you don't need this
+
+<P> Somehow, my Ubuntu.img start to boot via grub2 (grub 1.97~beta4).  But, I can
+ not execute <b>upgrade-from-grub-legacy</b> to get grub.cfg file created.  I must 
+ revert from grub2 back to  Legacy Grub.  Here are the steps:
+
+<PRE>
+  $ sudo mv /boot/grub /boot/grub_backup
+  $ sudo mkdir /boot/grub
+  $ sudo apt-get --purge remove startupmanager # Didn't install this, hence failed.
+  $ sudo apt-get --purge remove grub-pc grub-common
+  $ sudo apt-get install grub
+  $ sudo update-grub
+  $ sudo grub-install /dev/sda
+  $ sudo grub
+  $ find /boot/grub/stage1
+  $ root (hd0,2)
+  $ setup (hd0)
+</PRE>	
+
+</OL>
+
+</body>
+</html>

@@ -1,0 +1,1371 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html><head><title>VDE - VirtualSquare</title></head>
+<body class="mediawiki ns-0 ltr page-VDE">
+
+<OL>
+  <LI><a href="#VDE">VDE</a>
+  <LI><a href="#VDEFSTP">Fast Spanning Tree Protocol</a>
+  <LI><a href="#VDEBNet">VDE Basic Networking</a>
+     <UL>
+       <LI><a href="#Step_3:_run_a_User-Mode_Linux">UML with VDE</a>
+     </UL>
+</OL>
+
+<a name="VDE"></a><h2 class="firstHeading">VDE
+<a href="http://wiki.virtualsquare.org/index.php/VDE">(Source 
+Origin)</a></h2>
+<h3>Contents</h3> 
+<ul>
+<li class="toclevel-1"><a href="#VDE_components"><span class="tocnumber">1</span> <span class="toctext">VDE components</span></a>
+<ul>
+<li class="toclevel-2"><a href="#vde_switch"><span class="tocnumber">1.1</span> <span class="toctext">vde_switch</span></a>
+<ul>
+<li class="toclevel-3"><a href="#Main_features"><span class="tocnumber">1.1.1</span> <span class="toctext">Main features</span></a></li>
+<li class="toclevel-3"><a href="#User_definable_options"><span class="tocnumber">1.1.2</span> <span class="toctext">User definable options</span></a></li>
+<li class="toclevel-3"><a href="#Some_usage_examples"><span class="tocnumber">1.1.3</span> <span class="toctext">Some usage examples</span></a>
+<ul>
+<li class="toclevel-4"><a href="#Default_options"><span class="tocnumber">1.1.3.1</span> <span class="toctext">Default options</span></a></li>
+<li class="toclevel-4"><a href="#Customizing_daemon"><span class="tocnumber">1.1.3.2</span> <span class="toctext">Customizing daemon</span></a></li>
+<li class="toclevel-4"><a href="#Attaching_a_tap_interface"><span class="tocnumber">1.1.3.3</span> <span class="toctext">Attaching a tap interface</span></a></li>
+</ul>
+</li>
+<li class="toclevel-3"><a href="#Switch_management_in_detail"><span class="tocnumber">1.1.4</span> <span class="toctext">Switch management in detail</span></a>
+<ul>
+<li class="toclevel-4"><a href="#General_commands"><span class="tocnumber">1.1.4.1</span> <span class="toctext">General commands</span></a></li>
+<li class="toclevel-4"><a href="#Data_socket_commands"><span class="tocnumber">1.1.4.2</span> <span class="toctext">Data socket commands</span></a></li>
+<li class="toclevel-4"><a href="#Hash_table_commands"><span class="tocnumber">1.1.4.3</span> <span class="toctext">Hash table commands</span></a></li>
+<li class="toclevel-4"><a href="#Fast_Spanning_Tree_Protocol_commands"><span class="tocnumber">1.1.4.4</span> <span class="toctext">Fast Spanning Tree Protocol commands</span></a></li>
+<li class="toclevel-4"><a href="#Port_management_commands"><span class="tocnumber">1.1.4.5</span> <span class="toctext">Port management commands</span></a></li>
+<li class="toclevel-4"><a href="#VLAN_commands"><span class="tocnumber">1.1.4.6</span> <span class="toctext">VLAN commands</span></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toclevel-2"><a href="#vde_plug"><span class="tocnumber">1.2</span> <span class="toctext">vde_plug</span></a>
+<ul>
+<li class="toclevel-3"><a href="#dpipe"><span class="tocnumber">1.2.1</span> <span class="toctext">dpipe</span></a></li>
+<li class="toclevel-3"><a href="#vde_cryptcab"><span class="tocnumber">1.2.2</span> <span class="toctext">vde_cryptcab</span></a></li>
+<li class="toclevel-3"><a href="#wirefilter"><span class="tocnumber">1.2.3</span> <span class="toctext">wirefilter</span></a></li>
+</ul>
+</li>
+<li class="toclevel-2"><a href="#vde_plug2tap"><span class="tocnumber">1.3</span> <span class="toctext">vde_plug2tap</span></a></li>
+<li class="toclevel-2"><a href="#vdeqemu_-_vdekvm"><span class="tocnumber">1.4</span> <span class="toctext">vdeqemu - vdekvm</span></a></li>
+<li class="toclevel-2"><a href="#slirpvde"><span class="tocnumber">1.5</span> <span class="toctext">slirpvde</span></a></li>
+</ul>
+</li>
+</ul>
+</td></tr></tbody></table>
+<a name="VDE_components"></a><h3> <span class="mw-headline">VDE components</span></h3>
+<a name="vde_switch"></a><h3> <span class="mw-headline"><code>vde_switch</code></span></h3>
+<p>The vde_switch is a virtual switch provided with the vde networking
+architecture. As vde_switch can interconnect several virtual networking
+devices multiple vde_switches can be connected together with
+vde_cables. </p>
+<a name="Main_features"></a><h4> <span class="mw-headline">Main features</span></h4>
+<ul><li> <b>VLAN</b>
+</li></ul>
+<dl><dd> It makes possible to partition available switch ports into
+subsets. Each subset is called a Virtual LAN or VLAN. With this logical
+division of the virtual network it is possible to have several
+indipendent logical networks within the same virtual switch. Moreover,
+this also may be useful to separate the network traffic between hosts
+on the same VLAN and hosts that belong to the other VLANs. </dd></dl>
+<ul><li> <b>Fast Spanning Tree Protocol</b>
+</li></ul>
+<dl><dd> Implemented in vde_switch to prevent loops. Like in real
+switched networks the protocol finds a spanning tree for the mesh
+network and disables links that are not included within the spanning
+tree. When Fast Spanning Tree Protocol is running, ports cab be
+classified as their role in the network:
+<ul><li><i>Root</i>
+</li></ul>
+<dl><dd> A forwarding port that has been elected for the spanning-tree topology
+</dd></dl>
+<ul><li><i>Designated</i>
+</li></ul>
+<dl><dd> A forwarding port for every LAN segment
+</dd></dl>
+<ul><li><i>Alternate/Backup</i>
+</li></ul>
+<dl><dd> A backup/redundant path to a segment where another bridge port already connects or an alternate path to rootswitch.
+</dd></dl>
+<ul><li><i>Edge</i>
+</li></ul>
+<dl><dd> Ports that don't take part in the process of building network topology can be marked as <i>Edge</i> ports. They are usually connected to end-systems that do not influence Spanning Tree computation.
+</dd></dl>
+<ul><li><i>Unknown</i>
+</li></ul>
+<dl><dd> Unidentifiable role for the port.
+</dd></dl>
+</dd></dl>
+<ul><li> <b>Command line management</b>
+</li></ul>
+<dl><dd> It is possible to manage vde_switches both from a management
+socket (when running switch as detached process) and from standard
+input (when running switch as foreground process). The command line is
+useful to create VLANs, enable Fast Spanning Tree Protocol, monitor
+switch ports, switch status and data socket.
+</dd></dl>
+<a name="User_definable_options"></a><h4> <span class="mw-headline">User definable options</span></h4>
+<p>When starting a new vde_switch instance there are several customizable options:
+</p>
+<ul><li> number of ports
+</li><li> operation mode
+</li><li> switch mac address
+</li><li> configuration file 
+</li><li> management socket and permissions
+</li><li> data socket and permissions
+</li><li> tap interface
+</li></ul>
+<p>Since vde_switch is the core of vde virtual networking architecture
+it is highly customizable to be as flexible as possible. In the
+following subsections are briefly treated almost all its features.
+</p>
+<a name="Some_usage_examples"></a><h4> <span class="mw-headline">Some usage examples</span></h4>
+<a name="Default_options"></a><h4> <span class="mw-headline">Default options</span></h4>
+<pre>$ vde_switch
+
+vde:
+</pre>
+<p>Default working directory for the switch is <code>/tmp/vde.ctl</code> and default access mode of the directory is <code>2700</code>. By pressing return the management prompt for the switch appears. With <code>help</code>
+command it is possible to get a list of the possible commands (the
+actual list may differ from here depending on the version of the
+vde_switch and on the options enabled at compile time). </p>
+<pre>vde$ help
+0000 DATA END WITH '.'
+COMMAND PATH       SYNTAX          HELP
+------------       --------------  ------------
+ds                 ============    DATA SOCKET MENU
+ds/showinfo                        show ds info
+help               [arg]           Help (limited to arg when specified)
+logout                             logout from this mgmt terminal
+shutdown                           shutdown of the switch
+showinfo                           show switch version and info
+load               path            load a configuration script
+debug              ============    DEBUG MENU
+debug/list                         list debug categories
+debug/add          dbgpath         enable debug info for a given category
+debug/del          dbgpath         disable debug info for a given category
+plugin             ============    PLUGINS MENU
+plugin/list                        list plugins
+plugin/add         library         load a plugin
+plugin/del         name            unload a plugin
+hash               ============    HASH TABLE MENU
+hash/showinfo                      show hash info
+hash/setsize       N               change hash size
+hash/setgcint      N               change garbage collector interval
+hash/setexpire     N               change hash entries expire time
+hash/setminper     N               minimum persistence time
+hash/print                         print the hash table
+hash/find          MAC [VLAN]      MAC lookup
+fstp               ============    FAST SPANNING TREE MENU
+fstp/showinfo                      show fstp info
+fstp/setfstp       0/1             Fast spanning tree protocol 1=ON 0=OFF
+fstp/setedge       VLAN PORT 1/0   Define an edge port for a vlan 1=Y 0=N
+fstp/bonus         VLAN PORT COST  set the port bonus for a vlan
+fstp/print         [N]             print fst data for the defined vlan
+port               ============    PORT STATUS MENU
+port/showinfo                      show port info
+port/setnumports   N               set the number of ports
+port/sethub        0/1             1=HUB 0=switch
+port/setvlan       N VLAN          set port VLAN (untagged)
+port/create        N               create the port N (inactive|notallocatable)
+port/remove        N               remove the port N
+port/allocatable   N 0/1           Is the port allocatable as unnamed? 1=Y 0=N
+port/setuser       N user          access control: set user
+port/setgroup      N user          access control: set group
+port/epclose       N ID            remove the endpoint port N/id ID
+port/resetcounter  [N]             reset the port (N) counters
+port/print         [N]             print the port/endpoint table
+port/allprint      [N]             print the port/endpoint table (including inactive port)
+vlan               ============    VLAN MANAGEMENT MENU
+vlan/create        N               create the VLAN with tag N
+vlan/remove        N               remove the VLAN with tag N
+vlan/addport       N PORT          add port to the vlan N (tagged)
+vlan/delport       N PORT          add port to the vlan N (tagged)
+vlan/print         [N]             print the list of defined vlan
+vlan/allprint      [N]             print the list of defined vlan (including inactive port)
+.
+1000 Success
+</pre>
+<a name="Customizing_daemon"></a><h4> <span class="mw-headline">Customizing daemon</span></h4>
+<pre>$ vde_switch --daemon --sock /tmp/myvde.ctl --mgmt /tmp/myvde.mgmt
+</pre>
+<p>Now to access the command line management interface for the virtual
+switch it is possible to use a tool provided with vde that connect to
+the management unix socket <code>/tmp/muvde.mgmt</code>.
+</p>
+<pre>$ unixterm /tmp/myvde.mgmt
+VDE switch V.2.1.6
+(C) R.Davoli 2005 - GPLv2
+
+vde:
+</pre>
+<a name="Attaching_a_tap_interface"></a><h4> <span class="mw-headline">Attaching a tap interface</span></h4>
+<p>It is possible to connect switches to tap interfaces of the hosting operating system. Usually for security reasons
+tun/tap interfaces creation and configuration is restricted to system administrator. To allow a user to open and use the <code>/dev/net/tun</code> device the administrator have to preconfigure a persistent tap interface.
+This can be done with tools like <code>tunctl</code> provided within uml-utilities from <a href="http://www.user-mode-linux.org/" class="external text" title="http://www.user-mode-linux.org/" rel="nofollow">User Mode Linux</a>.
+</p><p>However the user can not modify any aspect of the persistent tap interface created. This task is up to the system administrator.
+</p>
+<pre># tunctl -u username -t tap0
+Set 'tap0' persistent and owned by uid 1000
+
+# ifconfig tap0 192.168.0.1 netmask 255.255.255.0
+</pre>
+<p>Once the tap interface is created and configured the user can start a vde_switch connected to it.
+</p>
+<pre>$ vde_switch --tap tap0
+
+vde: port/allprint
+0000 DATA END WITH '.'
+Port 0001 untagged_vlan=0000 ACTIVE - Unnamed Allocatable
+  -- endpoint ID 0006 module tuntap     &nbsp;: tap0
+.
+1000 Success
+</pre>
+<a name="Switch_management_in_detail"></a><h4> <span class="mw-headline">Switch management in detail</span></h4>
+<p>From vde_switch command line management interface is possible to
+tune almost every aspect of the virtual switch. Configuration command
+are divided in sections as can be seen from command line help.
+</p>
+<a name="General_commands"></a><h4> <span class="mw-headline">General commands</span></h4>
+<ul><li> <code>help [topic]</code>
+</li></ul>
+<dl><dd> prints entire help information. May be limited to specific subsection if subsection name is given as command argument
+</dd></dl>
+<ul><li> <code>logout</code>
+</li></ul>
+<dl><dd> used to logout from management command line when logged in from configuration socket
+</dd></dl>
+<ul><li> <code>shutdown</code>
+</li></ul>
+<dl><dd> causes the switch process to terminate
+</dd></dl>
+<ul><li> <code>showinfo</code>
+</li></ul>
+<dl><dd> prints general information about the switch such as uptime,
+process ID, uptime, switch's MAC address and management socket path and
+permissions (if any). It also tells how many unsent packets are waiting
+inside packet queue.
+</dd></dl>
+<ul><li> <code>load filename</code>
+</li></ul>
+<dl><dd> allows the user to load a script of management commands from
+file. The script syntax is the same of command line interface, with one
+command per line.
+</dd></dl>
+<a name="Data_socket_commands"></a><h4> <span class="mw-headline">Data socket commands</span></h4>
+<ul><li> <code>ds/showinfo</code>
+</li></ul>
+<dl><dd> prints general information about data socket, its path and access mode
+</dd></dl>
+<a name="Hash_table_commands"></a><h4> <span class="mw-headline">Hash table commands</span></h4>
+<p>Storage of MAC addresses inside vde_switch is managed via an hash table.
+</p>
+<ul><li> <code>hash/showinfo</code>
+</li></ul>
+<dl><dd> Prints out a summary of hash table details: hash table size,
+garbage collector interval and expiration and minimum persistence time.
+</dd></dl>
+<ul><li> <code>hash/setsize size</code>
+</li></ul>
+<dl><dd> Changes hash table size to fit a larger and crowded virtual network environment with a lot of hosts or MAC address.
+</dd></dl>
+<ul><li> <code>hash/setgcint seconds</code>
+</li></ul>
+<dl><dd> Changes garbage collector interval. Every interval expiration
+the garbage collector looks the hash table for items that have to be
+removed.
+</dd></dl>
+<ul><li> <code>hash/setexpire seconds</code>
+</li></ul>
+<dl><dd> Changes garbage collector expire time. When a new entry is
+added to the hash table a per-entry counter representing the age of the
+entry inside the hash table. This counter is increased every second and
+when it goes beyond expiration time the entry will be removed from
+garbage collector.
+</dd></dl>
+<ul><li> <code>hash/setminper seconds</code>
+</li></ul>
+<dl><dd> Changes minimum persistence time. (?)
+</dd></dl>
+<ul><li> <code>hash/print</code>
+</li></ul>
+<dl><dd> Prints out the whole content of hash table and for each entry
+it prints hash key, mac address, VLAN, port and current age of the
+entry in the hash table.
+</dd></dl>
+<ul><li> <code>hash/find mac_address [VLAN_id]</code>
+</li></ul>
+<dl><dd> Returns hash entry containing the given mac address.
+</dd></dl>
+<a name="Fast_Spanning_Tree_Protocol_commands"></a><h4> <span class="mw-headline">Fast Spanning Tree Protocol commands</span></h4>
+<ul><li> <code>fstp/showinfo</code>
+</li></ul>
+<dl><dd> Prints out general information about fast spanning tree protocol implementation inside vde_switch. This includes 
+</dd></dl>
+<ul><li> <code>fstp/setfstp 0/1</code>
+</li></ul>
+<dl><dd> Enables or disables fast spanning tree protocol
+</dd></dl>
+<ul><li> <code>fstp/setedge VLAN_id port_num 0/1</code>
+</li></ul>
+<dl><dd> Sets the specified port to be an edge-port. Edge-ports are
+those connected directly to end-systems. Since edge-ports do no take
+part in the building of network topology they are rapidly switched to
+forward. In this way edge-ports skip listening and learning stages of
+the protocol resulting in a faster convergence to stable topology.
+Further details about fast spanning tree protocol here <a href="http://en.wikipedia.org/wiki/Spanning_tree_protocol#Rapid_Spanning_Tree_Protocol_.28RSTP.29" class="external autonumber" title="http://en.wikipedia.org/wiki/Spanning_tree_protocol#Rapid_Spanning_Tree_Protocol_.28RSTP.29" rel="nofollow">[1]</a>
+</dd></dl>
+<ul><li> <code>fstp/bonus VLAN_id port_num cost</code>
+</li></ul>
+<dl><dd> It is used to set the bonus port and its priproty within a VLAN (?)
+</dd></dl>
+<ul><li> <code>fstp/print [VLAN_id]</code>
+</li></ul>
+<dl><dd> Prints out the current state of Spanning Tree Protocol for each defined VLAN.
+</dd></dl>
+<a name="Port_management_commands"></a><h4> <span class="mw-headline">Port management commands</span></h4>
+<ul><li> <code>port/showinfo</code>
+</li></ul>
+<dl><dd> Prints information about switch ports. Maximum number of currently available ports and current operating mode.
+</dd></dl>
+<ul><li> <code>port/setnumports number</code>
+</li></ul>
+<dl><dd> Used to change number of ports of the switch.
+</dd></dl>
+<ul><li> <code>port/sethub 0/1</code>
+</li></ul>
+<dl><dd> Sets switch in hub mode. Ethernet frames are broadcasted everywhere.
+</dd></dl>
+<ul><li> <code>port/setvlan port_num VLAN_id</code>
+</li></ul>
+<dl><dd> Adds the specified port as untagged to the specified vlan. In this way the specified port is only part of the specified vlan.
+</dd></dl>
+<ul><li> <code>port/create port_num</code>
+</li></ul>
+<dl><dd> Creates a new port even if nothing is connected to it.
+</dd></dl>
+<ul><li> <code>port/remove port_num</code>
+</li></ul>
+<dl><dd> Removes the specified port.
+</dd></dl>
+<ul><li> <code>port/allocatable port_num 0/1</code>
+</li></ul>
+<dl><dd> Sets a port as reserved. In this way it is not possible to connect something to it without specifying its exact port number.
+</dd></dl>
+<ul><li> <code>port/setuser port_num user</code>
+</li></ul>
+<dl><dd> Port access control. Set the user for this port.
+</dd></dl>
+<ul><li> <code>port/setgroup port_num group</code>
+</li></ul>
+<dl><dd> Port access control. Set the group for this port. Any user of
+this group will be allowed to use the port. If neither the user nor the
+group is set for a port, port access control is disabled. </dd></dl>
+<ul><li> <code>port/epclose port_num endpoint_id</code>
+</li></ul>
+<dl><dd> Closes the endpoint associated with the specified port.
+</dd></dl>
+<ul><li> <code>port/print [port_num]</code>
+</li></ul>
+<dl><dd> Prints information about all active ports.
+</dd></dl>
+<ul><li> <code>port/allprint [port_num]</code>
+</li></ul>
+<dl><dd> Prints information about all ports.
+</dd></dl>
+<a name="VLAN_commands"></a><h4> <span class="mw-headline">VLAN commands</span></h4>
+<ul><li> <code>vlan/create VLAN_id</code>
+</li></ul>
+<dl><dd> Creates a new VLAN with the given id.
+</dd></dl>
+<ul><li> <code>vlan/remove VLAN_id</code>
+</li></ul>
+<dl><dd> Removes the specified VLAN. A VLAN is not removable if there are ports associated with it.
+</dd></dl>
+<ul><li> <code>vlan/addport VLAN_id port_num</code>
+</li></ul>
+<dl><dd> Adds specified port to specified VLAN as tagged port. In this
+way if the specified port is already part of a VLAN it becomes also
+part of the specified VLAN. <br>Such port have to be used when
+connecting VLANs distributed over multiple switches. Outgoing frames
+from tagged ports have an additional header containing information
+about the LAN where it was generated. This way of distributing VLANs
+over different switches is called <i>VLAN trunking</i> and it is part of the [<a href="http://en.wikipedia.org/wiki/IEEE_802.1Q%7CIEEE" class="external text" title="http://en.wikipedia.org/wiki/IEEE_802.1Q|IEEE" rel="nofollow">802.1Q</a>] standard.
+</dd></dl>
+<ul><li> <code>vlan/delport VLAN_id port_num</code>
+</li></ul>
+<dl><dd> Removes specified tagged port from specified VLAN.
+</dd></dl>
+<ul><li> <code>vlan/print [VLAN_id]</code>
+</li></ul>
+<dl><dd> Prints information about VLANs.
+</dd></dl>
+<ul><li> <code>vlan/allprint [VLAN_id]</code>
+</li></ul>
+<dl><dd> Prints information about VLANs including in the output also inactive ports.
+</dd></dl>
+<a name="vde_plug"></a><h3> <span class="mw-headline"><code>vde_plug</code></span></h3>
+<p>A vde_plug is like an ethernet plug and was designed to be connected
+to vde_switches. Everything that is injected into the plug from
+standard input is sent into the vde_switch which it is connected to. On
+the other hand everything that comes from the virtual network to that
+plug goes to the vde_plug standard output.
+In the following subsection is presented and explained that enables the
+creation of so called vde_cables.
+</p>
+<a name="dpipe"></a><h4> <span class="mw-headline"><code>dpipe</code></span></h4>
+<p>Two vde_plug can be connected together with a simple but powerful
+tool developed to work in virtual distributed ethernet environment. <code>dpipe</code>
+also known as bi-directional pipe is able to run two or more commands
+diverting standard output of the first command into the standard input
+of the second command and vice-versa.
+</p>
+<pre>$ dpipe vde_plug /tmp/vde1.ctl = vde_plug /tmp/vde2.ctl
+</pre>
+<p>This simple example shows how is possible to connect two
+vde_switches together by running two vde_plugs connected to respective
+vde control sockets via the bi-directional channel provided by <code>dpipe</code>.
+</p>
+<pre>$ dpipe vde_plug /tmp/vde.ctl = ssh foo@remote.host.org vde_plug /tmp/vde_remote.ctl
+</pre>
+<p>Here can be seen how virtual distributed ethernet can become
+distributed for real. In this example a vde_switch running locally is
+connected to a remote vde_switch using a secure shell channel. This is
+done simply running a vde_plug connected to the remote vde control
+socket on the remote host. Potentially any program able to provide a
+bi-directional channel both remotely or locally can be used as a
+vde_wire to connect vde networking components. Another example could be
+an UDP unencrypted channel built with <code>netcat</code> utility.
+</p><p>One instance of netcat connected to a vde_switch waiting for incoming connections on the remote machine:
+</p>
+<pre>$ dpipe vde_plug /tmp/vde.ctl = nc -l -u -p 8000
+</pre>
+<p>That a netcat client connecting to the remote one and with standard
+input and output connected with dpipe to the local vde_switch:
+</p>
+<pre>$ dpipe vde_plug /tmp/vde_local.ctl = nc -u 8000 remove.host.address.org
+</pre>
+<a name="vde_cryptcab"></a><h4> <span class="mw-headline"><code>vde_cryptcab</code></span></h4>
+<p>In previous examples have been used tools like ssh or netcat to
+interconnect remote vde_switches. Although these two tools are very
+simple and intuitive to use they are both troublesome: netcat creates
+unencrypted connections and for this reason does not protect from
+traffic sniffing and intrusion; on the other hand ssh gives protection
+from traffic sniffing because the traffic transferred with ssh is
+encrypted but it has poor performances. The reason is that when
+overlaying two TCP transport control layers they work concurrently to
+keep the stream connection interfering almost all the time.
+</p><p>vde_cryptcab have been developed within the virtual square
+project to provide a secure and efficient tool to interconnect vde
+networking components distributed over different machines or different
+underlying networks.
+vde_cryptcab uses ssh to exchange a secret key and then creates an
+encrypted UDP connection.
+</p><p>Let's start a vde_cryptcab server connected to a vde_switch on a remote machine:
+</p>
+<pre>$ vde_cryptcab -s /tmp/vde.ctl -p 12000
+</pre>
+<p>This vde_cryptcab server will accept UDP datagrams on port 12000 and
+multiple connections authenticated via ssh. So it is possible to
+connect multiple remote vde_cryptcab clients to the same vde_cryptcab
+server. All datagrams are sent to udp port 12000.
+</p>
+<pre>$ vde_cryptcab -s /tmp/vde_local.ctl -c username@remote.host.org:12000
+username@remote.host.org's password:
+.blowfish.key                                     100%   24     0.0KB/s   00:00
+</pre>
+<p>Note that during initialization a blowfish secret key has been
+transferred to remote cryptcab server. The key will be used to encrypt
+UDP datagrams from and to the server.
+</p>
+<a name="wirefilter"></a><h4> <span class="mw-headline"><code>wirefilter</code></span></h4>
+<p>Another useful tool for testing purposes could be a program that
+simulates problems, limitations and errors of real wired connections,
+like noise, bandwidth and so on. A tool that does this has been
+developed within virtual distributed ethernet to operate in its
+environment. This tool can be inserted into a bi-directional pipeline
+say between two vde_plugs that interconnect two vde_switches, and can
+introduce virtual errors or limits on the line. <code>wirefilter</code> can control several connection parameters:
+</p>
+<ul><li> percentage of packet loss
+</li><li> extra delay on packet transmisison
+</li><li> percentage of duplicated packets
+</li><li> channel bandwidth
+</li><li> interface speed
+</li><li> maximum capacity of packet queue
+</li><li> maximum transmission unit
+</li><li> corrupted bits per megabyte
+</li><li> packet sorting
+</li></ul>
+<p>Since wirefilter works on bi-directional channels it is also
+possible to fine-tune the filtering by choosing which direction of the
+stream is affected by wirefilter settings. A typical example of
+wirefilter usage could be
+</p>
+<pre>$ dpipe vde_plug /tmp/vde1.ctl = wirefilter -M /tmp/wiremgmt = vde_plug /tmp/vde2.ctl
+</pre>
+<p>In this example wirefilter is in the middle of a bi-directional pipe
+that connects vde_switches together via two vde_plugs. It is possible
+to differentiate filtering for left-to-right or right-to-left channel.
+Note that like in vde_switch also in wirefilter it is possible to
+specify a unix socket to manage filter settings at runtime via
+unixterm.
+</p>
+<pre>$ unixterm /tmp/wiremgmt
+
+VDE wirefilter V.2.1.6
+(C) R.Davoli 2005,2006 - GPLv2
+
+VDEwf:help
+help:      print a summary of mgmt commands
+showinfo:  show status and parameter values
+loss:      set loss percentage
+delay:     set delay ms
+dup:       set dup packet percentage
+bandwidth: set channel bandwidth bytes/sec
+speed:     set interface speed bytes/sec
+noise:     set noise factor bits/Mbyte
+mtu:       set channel MTU (bytes)
+capacity:  set channel capacity (bytes)
+fifo:      set channel fifoness
+shutdown:  shut the channel down
+logout:    log out from this mgmt session
+1000 Success
+</pre>
+<a name="vde_plug2tap"></a><h3> <span class="mw-headline"><code>vde_plug2tap</code></span></h3>
+<p>vde_plug2tap is another plug tool that can be connected to
+vde_switches. Instead of using standard input and standard output for
+network I/O everything that come from vde_switch to the plug is
+redirected to the specified tap interface. In the same way everything
+injected into the tap interface is redirected to the vde_switch.
+</p>
+<pre>$ vde_plug2tap --daemon -s /tmp/myvde.ctl tap0
+</pre>
+<p>It is also possible to attach a tap interface during vde_switch creation, obtaining the same result.
+</p>
+<a name="vdeqemu_-_vdekvm"></a><h3> <span class="mw-headline"><code>vdeqemu - vdekvm</code></span></h3>
+<p>These tools are wrappers for running qemu/kvm virtual machines and
+get them connected to a vde_switch.
+Substantially they have the role of calling qemu/kvm with right network
+parameters by re-writing the command line. The only thing to know is
+the path for the desired vde_switch to connect to: vdeqemu/vdekvm
+launch qemu/kvm with the desired number of emulated network interfaces
+connected to the specified vde_switch(es).
+</p><p>First of all a vde_switch must be running and ready to accept
+connections on its control socket. Note that the vde_switch is
+connected to a preconfigured tap interface to make guest and host
+networks easier to reach.
+</p>
+<pre>$ vde_switch -d -s /tmp/vde.ctl -t tap0 -M /tmp/mgmt
+</pre>
+<p>Once vde_switch is started a new instance of qemu can be connected to it via vdeqemu wrapper
+</p>
+<pre>$ vdeqemu -hda /path/to/image.img -net nic -net vde,sock=/tmp/vde.ctl
+</pre>
+<p>Taking a look in the vde_switch management console it is possible to
+check what is connected to vde_switch after vdeqemu/vdekvm has been
+launched:
+</p>
+<pre>$ unixterm /tmp/mgmt
+VDE switch V.2.1.6
+(C) R.Davoli 2005 - GPLv2
+
+vde: port/print
+0000 DATA END WITH '.'
+Port 0001 untagged_vlan=0000 ACTIVE - Unnamed Allocatable
+  -- endpoint ID 0006 module tuntap     &nbsp;: tap0
+Port 0002 untagged_vlan=0000 ACTIVE - Unnamed Allocatable
+  -- endpoint ID 0007 module unix prog  &nbsp;: vdeqemu user=render PID=14422  SOCK=/tmp/vde.14422-00000
+.
+1000 Success
+</pre>
+<p>The usage of vdekvm is the same of vdeqemu: they are both simple links to vdeq.
+</p><p>By default qemu uses the same MAC address for every virtual machine, so if you plan to use several
+instances of qemu be sure to explicitly set a different MAC address for each virtual machine.
+</p><p>While generating your address beware to not use broadcast/multicast reserved MACs,
+ethernet rules say: the multicast bit is the low-order bit of the first byte, which is
+"the first bit on the wire". For example 34:12:de:ad:be:ef is an unicast address,
+35:12:de:ad:be:ef is a multicast address (see ETHERNET MULTICAST ADDRESSES section in
+<a href="http://www.iana.org/assignments/ethernet-numbers" class="external text" title="http://www.iana.org/assignments/ethernet-numbers" rel="nofollow">ethertypes</a> for more informations).
+</p><p><br>
+</p>
+<a name="slirpvde"></a><h3> <span class="mw-headline"><code>slirpvde</code></span></h3>
+<p>slirpvde is a slirp interface for VDE networks. It acts like a
+networking router connected to a vde_switch and provides connectivity
+from the host where it is running to virtual machines inside the
+virtual network. slirpvde is not the only way for virtual machines
+within a virtual distributed ethernet network to communicate with the
+outside world but its main feature is that it can be run using standard
+user privileges.
+</p><p>Every connection from a machine within the virtual network to
+slirpvde internal address is translated, masqueraded and re-generated
+by slirpvde and redirected to host machine stack. Like most of the
+intermediate systems it provides basic functionalities like dhcp
+service, port forwarding and dns requests re-mapping.
+</p>
+<pre>$ slirpvde -d -s /tmp/vde.ctl -dhcp
+</pre>
+<p>Launching slirpvde and just specifying the vde_switch control socket
+where virtual machines are connected is enough to provide access to
+external network to all virtual machines connected to that vde_switch.
+The additional <code>-dhcp</code> option tells slirpvde to provide also dynamic network addresses assignment.
+</p>
+<pre>$ unixterm /tmp/mgmt
+VDE switch V.2.1.6
+(C) R.Davoli 2005 - GPLv2
+
+vde: port/print
+0000 DATA END WITH '.'
+Port 0001 untagged_vlan=0000 ACTIVE - Unnamed Allocatable
+  -- endpoint ID 0006 module tuntap     &nbsp;: tap0
+Port 0002 untagged_vlan=0000 ACTIVE - Unnamed Allocatable
+  -- endpoint ID 0007 module unix prog  &nbsp;: vdeqemu user=render PID=14422  SOCK=/tmp/vde.14422-00000
+Port 0003 untagged_vlan=0000 ACTIVE - Unnamed Allocatable
+  -- endpoint ID 0009 module unix prog  &nbsp;: slirpvde: user=render PID=14554  SOCK=/tmp/vde.14554-00000
+.
+1000 Success
+</pre>
+<p>With a look to vde_switch management interface it is possible to see
+that slirpvde is connected to port 3 of the vde_switch. On the other
+ports can be seen a qemu virtual machine and a tap interface. Nothing
+forbids to use dhcp service provided by slirpvde to use it also to
+configure the tap interfaces connected to the switch.
+</p>
+<!-- Saved in parser cache with key wikidb:pcache:idhash:6-0!1!0!!en!2 and timestamp 20090702095926 -->
+<div class="printfooter">
+Retrieved from "<a href="http://wiki.virtualsquare.org/index.php/VDE">http://wiki.virtualsquare.org/index.php/VDE</a>"</div>
+						<!-- end content -->
+			<div class="visualClear"></div>
+		</div>
+	</div>
+		</div>
+		<div id="column-one">
+	<div id="p-cactions" class="portlet">
+		<h5>Views</h5>
+		<div class="pBody">
+			<ul>
+					 <li id="ca-nstab-main" class="selected"><a href="http://wiki.virtualsquare.org/index.php/VDE" title="View the content page [alt-c]" accesskey="c">Article</a></li>
+					 <li id="ca-talk" class="new"><a href="http://wiki.virtualsquare.org/index.php?title=Talk:VDE&amp;action=edit" title="Discussion about the content page [alt-t]" accesskey="t">Discussion</a></li>
+					 <li id="ca-edit"><a href="http://wiki.virtualsquare.org/index.php?title=VDE&amp;action=edit" title="You can edit this page. Please use the preview button before saving. [alt-e]" accesskey="e">Edit</a></li>
+					 <li id="ca-history"><a href="http://wiki.virtualsquare.org/index.php?title=VDE&amp;action=history" title="Past versions of this page. [alt-h]" accesskey="h">History</a></li>
+				</ul>
+		</div>
+	</div>
+
+<a name="VDEFSTP"></a><h2 class="firstHeading">Fast Spanning Tree Protocol
+<a href="http://wiki.virtualsquare.org/index.php/Fast_Spanning_Tree_Protocol">(Source 
+Origin)</a></h2>
+		<div id="bodyContent">
+			<h4 id="siteSub">From VirtualSquare</h4>
+			<div id="contentSub"></div>
+
+<p>Fast Spanning Tree Protocol has been introduced in vde networking to manage
+and detect loops and redundant links
+inside the network. The protocol is also responsible of network
+topology auto-reconfiguration when links or switches disappear or when
+a cycle is detected.
+</p><p>vde_switch management interface provides commands to manage and
+monitor Fast Spanning Tree Protocol status and parameters. In this part
+of the tutorial we'll analyze a network example with topology aspects
+managed by Fast Spanning Tree Protocol.
+</p>
+<table id="toc" class="toc" summary="Contents"><tbody><tr><td><div id="toctitle"><h4>Contents</h4> 
+<ul>
+<li class="toclevel-1"><a href="#Before_continuing"><span class="tocnumber">1</span> <span class="toctext">Before continuing</span></a></li>
+<li class="toclevel-1"><a href="#The_case_study"><span class="tocnumber">2</span> <span class="toctext">The case study</span></a>
+<ul>
+<li class="toclevel-2"><a href="#Setting_up_the_network"><span class="tocnumber">2.1</span> <span class="toctext">Setting up the network</span></a></li>
+<li class="toclevel-2"><a href="#Starting_Fast_Spanning_Tree_Protocol"><span class="tocnumber">2.2</span> <span class="toctext">Starting Fast Spanning Tree Protocol</span></a></li>
+<li class="toclevel-2"><a href="#Link_failure_simulation"><span class="tocnumber">2.3</span> <span class="toctext">Link failure simulation</span></a></li>
+<li class="toclevel-2"><a href="#Bonus_ports"><span class="tocnumber">2.4</span> <span class="toctext">Bonus ports</span></a></li>
+</ul>
+</li>
+</ul>
+</td></tr></tbody></table><script type="text/javascript"> if (window.showTocToggle) { var tocShowText = "show"; var tocHideText = "hide"; showTocToggle(); } </script>
+<a name="Before_continuing"></a><h4> <span class="mw-headline">Before continuing</span></h4>
+<p>In this tutorial we are going to use multiple vde_switches in the
+same hosting machine. To compare management output from multiple
+switches with simple shell scripts it is useful to enable unixterm to
+receive commands from standard input. This additional feature can be
+addedd to vde source tree with a little patch on unixterm source code.
+The patch can be downloaded <a href="http://wiki.virtualsquare.org/images/b/ba/Unixterm_20070403.patch.bz2" class="internal" title="Unixterm 20070403.patch.bz2">here</a>.
+</p><p>Here follows a quick example that shows how to apply the patch to vde source code tree.
+</p>
+<pre>$ bzcat unixterm_20070403.patch.bz2 | patch -p1 -d vde2-2.1.6
+patching file unixterm/unixterm.c
+</pre>
+
+<P> <b>Note: (07/12/2009)</b> Debian Vde2-2.2.2:  The above patch only work for 
+vde2-2.1.6 and on release r153. You may download the
+<a href="http://vde.svn.sourceforge.net/viewvc/vde/trunk/vde-2/unixterm/unixterm.c?view=log&pathrev=93">Correct One from here</a>.  The cached 
+<a href="./vdeterm.c">vdeterm.c</a> is the one patched by me for Vde2-2.2.2.
+You may  compile it in vde2-2.2.2, and install its binary as 
+<b>/usr/local/bin/vdeterm</b>.  The next command line in the *restore-lan shell script
+may be replacing by the following:
+
+<PRE>
+sudo pkill -f "vde_switch -tap tap0 -mod 644 -sock=/src3/KVM/network-3426 -mgmt
+         /src3/KVM/network-3426/vde_switch.mgmt"
+-----------------------------------------------------------------------------------
+ echo "shutdown" | sudo vdeterm -i -s ../network-3426/vde_switch.mgmt
+</PRE>
+
+
+<p>Once the patch has been applied you need to recompile unixterm and substitute it with the new binary just compiled.
+</p>
+<pre>$ cd vde2-2.1.6/unixterm
+$ make
+$ mv unixterm `which unixterm`
+</pre>
+<a name="The_case_study"></a><h4> <span class="mw-headline">The case study</span></h4>
+<img src="http://wiki.virtualsquare.org/images/c/c6/Fstp1.png" height="279" width="345">
+
+<p>We are going to analyze the virtual network shown in the figure here
+on the right: it is a network of four vde_switches completely-connected
+or, in other words, a network where each switch is connected to every
+other switch by a network link.
+</p><p>As can be seen there are several redundant links and several
+loops in this network. The role of Fast Spanning Tree Protocol is to
+compute a spanning tree for the network and to disable links that are
+not part of the tree. </p><p>In fact on switched ethernet network the presence of more than
+one open path at once result in several problems on the network: from
+CPU and bandwidth consumption caused by frames looping around, to
+failure of source-based location system used for frames routing at data
+link layer.
+</p><p>In the following subsection we are going to build the little
+network shown in the example to see its behavior step-by-step and to
+have a look to commands and configuration parameters provided by
+vde_switch management console.
+</p>
+
+
+<div style="clear: both;">
+</div>
+</div>
+<a name="Setting_up_the_network"></a><h4> <span class="mw-headline">Setting up the network</span></h4>
+<p>First of all we need to start four new vde_switches. This can be
+done with a simple one-line shell script. Parameters needed by
+vde_switch are the data socket path, the management socket path and the
+flag to tell
+him to run as a daemon.
+</p>
+<pre>$ for i in `seq 4`; do vde_switch -d -s /tmp/vde$i -M /tmp/mgmt$i; done
+$ ps x | grep vde_switch
+ 1065&nbsp;?        Ss     0:00 vde_switch -d -s /tmp/vde1 -M /tmp/mgmt1
+ 1067&nbsp;?        Ss     0:00 vde_switch -d -s /tmp/vde2 -M /tmp/mgmt2
+ 1069&nbsp;?        Ss     0:00 vde_switch -d -s /tmp/vde3 -M /tmp/mgmt3
+ 1071&nbsp;?        Ss     0:00 vde_switch -d -s /tmp/vde4 -M /tmp/mgmt4
+</pre>
+<p>Now that vde_switches are up and running we have to create new links between them.
+</p><p>In order to obtain the same configuration shown in the example
+without the need to specify additional parameters to vde_plug it is
+important to follow the right order while creating the links. Every
+time a virtual network device is plugged into a vde_switch the first
+available port is assigned to it, starting from port number one.
+</p><p>To create links for the example we use the simplest way to do it: a bi-directional pipe and two vde_plugs for each link. 
+</p>
+<pre>$ dpipe vde_plug /tmp/vde1 = vde_plug /tmp/vde2 &amp;
+$ dpipe vde_plug /tmp/vde1 = vde_plug /tmp/vde3 &amp;
+$ dpipe vde_plug /tmp/vde1 = vde_plug /tmp/vde4 &amp;
+$ dpipe vde_plug /tmp/vde2 = vde_plug /tmp/vde3 &amp;
+$ dpipe vde_plug /tmp/vde2 = vde_plug /tmp/vde4 &amp;
+$ dpipe vde_plug /tmp/vde3 = vde_plug /tmp/vde4 &amp;
+</pre>
+<p>By default Fast Spanning Tree Protocol is not enabled at switch
+startup hence all created links are active. This results in multiple
+loops and multiple redundant links since all ports are enabled. As can
+be seen from output data given out by management console Fast Spanning
+Tree Protocol is disabled and all ports are marked as active. </p>
+<pre>$ for i in `seq 4`; do echo fstp/print | unixterm -i -s /tmp/mgmt$i; done
+/tmp/mgmt1: FST DATA VLAN 0000 ROOTSWITCH FSTP IS DISABLED
+/tmp/mgmt1:  ++ root 80:00:00:ff:02:61:df:3b
+/tmp/mgmt1:  ++ designated ff:ff:ff:ff:ff:ff:ff:ff
+/tmp/mgmt1:  ++ rootport 0000 cost 0 age 21495 bonusport 0000 bonuscost 0
+/tmp/mgmt1:  -- Port 0001 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt1:  -- Port 0002 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt1:  -- Port 0003 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt2: FST DATA VLAN 0000 ROOTSWITCH FSTP IS DISABLED
+/tmp/mgmt2:  ++ root 80:00:00:ff:0f:ba:e9:1a
+/tmp/mgmt2:  ++ designated ff:ff:ff:ff:ff:ff:ff:ff
+/tmp/mgmt2:  ++ rootport 0000 cost 0 age 21495 bonusport 0000 bonuscost 0
+/tmp/mgmt2:  -- Port 0001 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt2:  -- Port 0002 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt2:  -- Port 0003 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt3: FST DATA VLAN 0000 ROOTSWITCH FSTP IS DISABLED
+/tmp/mgmt3:  ++ root 80:00:00:ff:e8:9b:68:26
+/tmp/mgmt3:  ++ designated ff:ff:ff:ff:ff:ff:ff:ff
+/tmp/mgmt3:  ++ rootport 0000 cost 0 age 21495 bonusport 0000 bonuscost 0
+/tmp/mgmt3:  -- Port 0001 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt3:  -- Port 0002 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt3:  -- Port 0003 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt4: FST DATA VLAN 0000 ROOTSWITCH FSTP IS DISABLED
+/tmp/mgmt4:  ++ root 80:00:00:ff:c8:97:58:52
+/tmp/mgmt4:  ++ designated ff:ff:ff:ff:ff:ff:ff:ff
+/tmp/mgmt4:  ++ rootport 0000 cost 0 age 21495 bonusport 0000 bonuscost 0
+/tmp/mgmt4:  -- Port 0001 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt4:  -- Port 0002 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt4:  -- Port 0003 tagged=0 portcost=20000000 role=Designated
+</pre>
+<p>In such a situation if data is injected into the network it starts
+looping around generating a lot of useless traffic and saturating cpu
+usage. This happens because the traditional source-based location
+system for switched ethernet networks fails to work correctly. Troubles
+with location system can be advised looking at vde_switch logging
+output in syslog.
+</p><p>Here is a little snapshot of what happens when connecting a vde_plug2tap to the network.
+</p>
+<pre>Mar  7 15:04:48 balaton vde_switch[2323]: VDE_SWITCH started
+Mar  7 15:04:48 balaton vde_switch[2325]: VDE_SWITCH started
+Mar  7 15:04:48 balaton vde_switch[2327]: VDE_SWITCH started
+Mar  7 15:04:48 balaton vde_switch[2329]: VDE_SWITCH started
+Mar  7 15:12:37 balaton vde_plug2tap[2412]: VDE_PLUG2TAP started
+Mar  7 15:13:37 balaton vde_switch[2326]: MAC 2a:93:e5:15:4e:b9 moved from port 1 to port 2
+Mar  7 15:13:37 balaton vde_switch[2328]: MAC 2a:93:e5:15:4e:b9 moved from port 2 to port 1
+Mar  7 15:13:37 balaton vde_switch[2328]: MAC 2a:93:e5:15:4e:b9 moved from port 2 to port 1
+Mar  7 15:13:37 balaton vde_switch[2328]: MAC 2a:93:e5:15:4e:b9 moved from port 2 to port 3
+Mar  7 15:13:37 balaton vde_switch[2330]: MAC 2a:93:e5:15:4e:b9 moved from port 3 to port 1
+Mar  7 15:13:37 balaton vde_switch[2326]: MAC 2a:93:e5:15:4e:b9 moved from port 1 to port 3
+Mar  7 15:13:37 balaton vde_switch[2330]: MAC 2a:93:e5:15:4e:b9 moved from port 3 to port 2
+</pre>
+<a name="Starting_Fast_Spanning_Tree_Protocol"></a><h4> <span class="mw-headline">Starting Fast Spanning Tree Protocol</span></h4>
+<p>Although it is possible to enable Fast Spanning Tree Protocol while
+starting vde_switches it is also possible to manage its status at
+run-time via vde_switch management console. Fast Spanning Tree Protocol
+can be enabled on each active switch with this command:
+</p>
+<pre>$ for i in `seq 4`; do echo fstp/setfstp 1 | ./unixterm -i -s /tmp/mgmt$i; done
+</pre>
+<p>Ports status with Fast Spanning Tree Protocol. 
+</p>
+<pre>/tmp/mgmt1: FST DATA VLAN 0000  
+/tmp/mgmt1:  ++ root 80:00:00:ff:03:41:d9:1a
+/tmp/mgmt1:  ++ designated 80:00:00:ff:03:41:d9:1a
+/tmp/mgmt1:  ++ rootport 0001 cost 20000000 age 0 bonusport 0000 bonuscost 0
+/tmp/mgmt1:  -- Port 0001 tagged=0 portcost=20000000 role=Root
+/tmp/mgmt1:  -- Port 0002 tagged=0 portcost=20000000 role=Alternate/Backup
+/tmp/mgmt1:  -- Port 0003 tagged=0 portcost=20000000 role=Alternate/Backup
+/tmp/mgmt2: FST DATA VLAN 0000  
+/tmp/mgmt2:  ++ root 80:00:00:ff:03:41:d9:1a
+/tmp/mgmt2:  ++ designated 80:00:00:ff:03:41:d9:1a
+/tmp/mgmt2:  ++ rootport 0002 cost 20000000 age 0 bonusport 0000 bonuscost 0
+/tmp/mgmt2:  -- Port 0001 tagged=0 portcost=20000000 role=Alternate/Backup
+/tmp/mgmt2:  -- Port 0002 tagged=0 portcost=20000000 role=Root
+/tmp/mgmt2:  -- Port 0003 tagged=0 portcost=20000000 role=Alternate/Backup
+/tmp/mgmt3: FST DATA VLAN 0000 ROOTSWITCH 
+/tmp/mgmt3:  ++ root 80:00:00:ff:03:41:d9:1a
+/tmp/mgmt3:  ++ designated ff:ff:ff:ff:ff:ff:ff:ff
+/tmp/mgmt3:  ++ rootport 0000 cost 0 age 8542 bonusport 0000 bonuscost 0
+/tmp/mgmt3:  -- Port 0001 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt3:  -- Port 0002 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt3:  -- Port 0003 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt4: FST DATA VLAN 0000  
+/tmp/mgmt4:  ++ root 80:00:00:ff:03:41:d9:1a
+/tmp/mgmt4:  ++ designated 80:00:00:ff:03:41:d9:1a
+/tmp/mgmt4:  ++ rootport 0002 cost 20000000 age 1 bonusport 0000 bonuscost 0
+/tmp/mgmt4:  -- Port 0001 tagged=0 portcost=20000000 role=Alternate/Backup
+/tmp/mgmt4:  -- Port 0002 tagged=0 portcost=20000000 role=Root
+/tmp/mgmt4:  -- Port 0003 tagged=0 portcost=20000000 role=Alternate/Backup
+</pre>
+<BR>
+<img src="http://wiki.virtualsquare.org/images/0/00/Fstp2.png" height="279" width="345">
+<ul><li> Switch vde3 has been elected as rootswitch, all its ports have been configured as <i>Designated</i>. Their role is to deliver data to all other LAN segments.
+</li><li> Switches vde1, vde2 and vde4 have been configured as leafs of
+the Spanning Tree, keeping active only links directly connected to
+rootswitch vde3. Ports connected to these links have been configured as
+<i>Root</i> ports. 
+</li><li> Every other port that is not part of the Spanning Tree have been configured as <i>Alternate/Backup</i> and so they are kept disabled until something happens, like topology changes or switch/link failure.
+</li></ul>
+<p>It is possible to simulate a link failure choosing a link and
+shutting down vde_plugs associated with it. Let's see what happens such
+a failure takes place.
+</p>
+</div>
+
+</div>
+<div style="clear: both;">
+</div>
+</div>
+<a name="Link_failure_simulation"></a><h4> <span class="mw-headline">Link failure simulation</span></h4>
+<p>In this example we want to simulate a failure on link between vde3
+and vde4. First of all we have to search right vde_plugs that are
+endpoints of the selected link.
+To do this we have to look at ports status on switches vde3 and vde4.
+</p>
+<pre>$ echo port/allprint | unixterm -i -s /tmp/mgmt3 
+Port 0001 untagged_vlan=0000 ACTIVE - Unnamed Allocatable
+-- endpoint ID 0006 module unix prog  &nbsp;: vde_plug: user=render PID=2621 192.168.0.1 37484 22 ...
+Port 0002 untagged_vlan=0000 ACTIVE - Unnamed Allocatable
+-- endpoint ID 0008 module unix prog  &nbsp;: vde_plug: user=render PID=2628 192.168.0.1 37484 22 ...
+Port 0003 untagged_vlan=0000 ACTIVE - Unnamed Allocatable
+-- endpoint ID 0010 module unix prog  &nbsp;: vde_plug: user=render PID=2625 192.168.0.1 37484 22 ...
+</pre>
+<p>We are going to kill the vde_plug connected to port 3, its pid is
+PID=2625. In the same way we look for pid of the vde_plug connected to
+port 3 on the vde4 switch. Note that part of the output has been
+omitted to fit the page width.
+</p>
+<pre>$ echo port/allprint | unixterm -i -s /tmp/mgmt4
+Port 0001 untagged_vlan=0000 ACTIVE - Unnamed Allocatable
+-- endpoint ID 0006 module unix prog  &nbsp;: vde_plug: user=render PID=2623 192.168.0.1 37484 22 ...
+Port 0002 untagged_vlan=0000 ACTIVE - Unnamed Allocatable
+-- endpoint ID 0008 module unix prog  &nbsp;: vde_plug: user=render PID=2629 192.168.0.1 37484 22 ...
+Port 0003 untagged_vlan=0000 ACTIVE - Unnamed Allocatable
+-- endpoint ID 0010 module unix prog  &nbsp;: vde_plug: user=render PID=2627 192.168.0.1 37484 22 ...
+</pre>
+<p>The other pid we were looking for is PID=2627. Now we can simulate
+the link failure by killing only one of these processes (the other will
+terminate because of a signal generated by termination of
+bi-directional pipe to which it was connected to).
+</p>
+<pre>$ kill -9 2625
+</pre>
+<p>Now Fast Spanning Tree Protocol converges rapidly to a new stable
+topology loop-free. Here is the new status of the network after link
+failure and auto-reconfiguration.
+</p>
+<pre>$ for i in `seq 4`; do echo fstp/print | unixterm -i -s /tmp/mgmt$i; done
+/tmp/mgmt1: FST DATA VLAN 0000  
+/tmp/mgmt1:  ++ root 80:00:00:ff:57:53:46:13
+/tmp/mgmt1:  ++ designated 80:00:00:ff:57:53:46:13
+/tmp/mgmt1:  ++ rootport 0003 cost 20000000 age 1 bonusport 0000 bonuscost 0
+/tmp/mgmt1:  -- Port 0001 tagged=0 portcost=20000000 role=Alternate/Backup
+/tmp/mgmt1:  -- Port 0002 tagged=0 portcost=20000000 role=Alternate/Backup
+/tmp/mgmt1:  -- Port 0003 tagged=0 portcost=20000000 role=Root
+/tmp/mgmt2: FST DATA VLAN 0000  
+/tmp/mgmt2:  ++ root 80:00:00:ff:57:53:46:13
+/tmp/mgmt2:  ++ designated 80:00:00:ff:57:53:46:13
+/tmp/mgmt2:  ++ rootport 0002 cost 20000000 age 1 bonusport 0000 bonuscost 0
+/tmp/mgmt2:  -- Port 0001 tagged=0 portcost=20000000 role=Alternate/Backup
+/tmp/mgmt2:  -- Port 0002 tagged=0 portcost=20000000 role=Root
+/tmp/mgmt2:  -- Port 0003 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt3: FST DATA VLAN 0000 ROOTSWITCH 
+/tmp/mgmt3:  ++ root 80:00:00:ff:57:53:46:13
+/tmp/mgmt3:  ++ designated ff:ff:ff:ff:ff:ff:ff:ff
+/tmp/mgmt3:  ++ rootport 0000 cost 0 age 2011 bonusport 0000 bonuscost 0
+/tmp/mgmt3:  -- Port 0001 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt3:  -- Port 0002 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt4: FST DATA VLAN 0000  
+/tmp/mgmt4:  ++ root 80:00:00:ff:57:53:46:13
+/tmp/mgmt4:  ++ designated 80:00:00:ff:80:38:d5:63
+/tmp/mgmt4:  ++ rootport 0002 cost 40000000 age 2 bonusport 0000 bonuscost 0
+/tmp/mgmt4:  -- Port 0001 tagged=0 portcost=20000000 role=Alternate/Backup
+/tmp/mgmt4:  -- Port 0002 tagged=0 portcost=20000000 role=Root
+</pre>
+<br>
+<img src="http://wiki.virtualsquare.org/images/6/6b/Fstp_failure.png" height="279" width="345">
+<ul><li> Switch vde4 has been isolated from the rest of the network so the Spanning Tree have to be recalculated.
+</li><li> After disappearing of direct link between vde3 and vde4 the
+temporary disabled link between vde2 and vde4 have been re-activated.
+</li><li> Rootswitch is the same as before.
+</li><li> Now switch vde4 can reach rootswitch passing through switch vde2.
+</li></ul>
+<p>This simple example shows how Fast Spanning Tree Protocol behaves
+when failures on links happen. By default the Fast Spanning Tree
+Protocol decides itself how to rebuild the spanning tree when failures
+or topology changes take place basing its choices on ports cost.
+</p><p>By default each port of a switch has the same cost, but it is possible (for each VLAN) to specify a <i>bonus</i> cost to a port that will be called <i>bonus port</i>.
+A bonus port is different from the others because from its standard
+cost is subtracted a bonus cost defined by the user. Let's see an
+example of how bonus ports work.
+</p>
+</div>
+
+<div style="clear: both;">
+</div>
+</div>
+<a name="Bonus_ports"></a><h4> <span class="mw-headline">Bonus ports</span></h4>
+<img src="http://wiki.virtualsquare.org/images/e/e9/Fstp_bonus.png" height="279" width="345">
+<p>We use again the network of previous example. This time, before
+starting Fast Spanning Tree Protocol we are going to configure bonus
+ports and bonus costs for each vde_switch, in order to influence
+spanning tree creation.
+</p><p>In a completely connected network like this where every link
+have the same weight the most reasonable way to build a spanning tree
+is to choose a root switch and then keep enabled only links that
+connect each other switch directly to the root. When virtual switches
+are distributed also in reality could be useful to assign priority to
+some predefined links in order to get better performance.
+</p><p>Like shown in the figure on the right we are going to set bonus
+ports and costs to give greater priority to links between vde3, vde4
+and vde1. Let's see how to do it in practice.
+</p>
+</div>
+
+  <div class="thumbcaption">
+</div>
+<div style="clear: both;">
+</div>
+</div>
+<p>Once switches and links have been created we have to define bonus ports and costs like shown in the last figure.
+Starting from switch vde1, we set port 1 as bonusport with bonuscost 19000000 for the only available VLAN 0.
+</p>
+<pre>$ echo fstp/bonus 0 1 19000000 | unixterm -i -s /tmp/mgmt1.
+
+$ echo fstp/print | unixterm -i -s /tmp/mgmt1
+/tmp/mgmt1: FST DATA VLAN 0000 ROOTSWITCH FSTP IS DISABLED
+/tmp/mgmt1:  ++ root 80:00:00:ff:ee:34:a5:69
+/tmp/mgmt1:  ++ designated ff:ff:ff:ff:ff:ff:ff:ff
+/tmp/mgmt1:  ++ rootport 0000 cost 0 age 250 bonusport 0001 bonuscost 19000000
+/tmp/mgmt1:  -- Port 0001 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt1:  -- Port 0002 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt1:  -- Port 0003 tagged=0 portcost=20000000 role=Designated
+</pre>
+<p>In vde3 we set port 1 as bonusport with bonuscost 15000000.
+</p>
+<pre>$ echo fstp/bonus 0 1 15000000 | unixterm -i -s /tmp/mgmt3
+
+$ echo fstp/print | unixterm -i -s /tmp/mgmt3
+/tmp/mgmt3: FST DATA VLAN 0000 ROOTSWITCH FSTP IS DISABLED
+/tmp/mgmt3:  ++ root 80:00:00:ff:ad:e2:f2:73
+/tmp/mgmt3:  ++ designated ff:ff:ff:ff:ff:ff:ff:ff
+/tmp/mgmt3:  ++ rootport 0000 cost 0 age 455 bonusport 0001 bonuscost 15000000
+/tmp/mgmt3:  -- Port 0001 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt3:  -- Port 0002 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt3:  -- Port 0003 tagged=0 portcost=20000000 role=Designated
+</pre>
+<p>Finally we set port 1 of vde4 switch as bonusport with bonuscost 15000000.
+</p>
+<pre>$ echo fstp/bonus 0 1 15000000 | unixterm -i -s /tmp/mgmt4
+
+$ echo fstp/print | unixterm -i -s /tmp/mgmt4
+/tmp/mgmt4: FST DATA VLAN 0000 ROOTSWITCH FSTP IS DISABLED
+/tmp/mgmt4:  ++ root 80:00:00:ff:df:43:ac:60
+/tmp/mgmt4:  ++ designated ff:ff:ff:ff:ff:ff:ff:ff
+/tmp/mgmt4:  ++ rootport 0000 cost 0 age 576 bonusport 0001 bonuscost 15000000
+/tmp/mgmt4:  -- Port 0001 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt4:  -- Port 0002 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt4:  -- Port 0003 tagged=0 portcost=20000000 role=Designated
+</pre>
+<p>Now it is possible to start Fast Spanning Tree Protocol on all switches and then see what happens.
+</p>
+<pre>$ for i in `seq 4`; do echo fstp/setfstp 1 | unixterm -i -s /tmp/mgmt$i; done
+
+$ for i in `seq 4`; do echo fstp/print | unixterm -i -s /tmp/mgmt$i; done
+/tmp/mgmt1: FST DATA VLAN 0000  
+/tmp/mgmt1:  ++ root 80:00:00:ff:a2:6a:6e:44
+/tmp/mgmt1:  ++ designated 80:00:00:ff:a2:6a:6e:44
+/tmp/mgmt1:  ++ rootport 0001 cost 1000000 age 2 bonusport 0001 bonuscost 19000000
+/tmp/mgmt1:  -- Port 0001 tagged=0 portcost=20000000 role=Root
+/tmp/mgmt1:  -- Port 0002 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt1:  -- Port 0003 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt2: FST DATA VLAN 0000 ROOTSWITCH 
+/tmp/mgmt2:  ++ root 80:00:00:ff:a2:6a:6e:44
+/tmp/mgmt2:  ++ designated ff:ff:ff:ff:ff:ff:ff:ff
+/tmp/mgmt2:  ++ rootport 0000 cost 0 age 719 bonusport 0000 bonuscost 0
+/tmp/mgmt2:  -- Port 0001 tagged=0 portcost=20000000 role=Designated
+/tmp/mgmt2:  -- Port 0002 tagged=0 portcost=20000000 role=Alternate/Backup
+/tmp/mgmt2:  -- Port 0003 tagged=0 portcost=20000000 role=Alternate/Backup
+/tmp/mgmt3: FST DATA VLAN 0000  
+/tmp/mgmt3:  ++ root 80:00:00:ff:a2:6a:6e:44
+/tmp/mgmt3:  ++ designated 80:00:00:ff:ee:34:a5:69
+/tmp/mgmt3:  ++ rootport 0001 cost 6000000 age 3 bonusport 0001 bonuscost 15000000
+/tmp/mgmt3:  -- Port 0001 tagged=0 portcost=20000000 role=Root
+/tmp/mgmt3:  -- Port 0002 tagged=0 portcost=20000000 role=Alternate/Backup
+/tmp/mgmt3:  -- Port 0003 tagged=0 portcost=20000000 role=Alternate/Backup
+/tmp/mgmt4: FST DATA VLAN 0000  
+/tmp/mgmt4:  ++ root 80:00:00:ff:a2:6a:6e:44
+/tmp/mgmt4:  ++ designated 80:00:00:ff:ee:34:a5:69
+/tmp/mgmt4:  ++ rootport 0001 cost 6000000 age 3 bonusport 0001 bonuscost 15000000
+/tmp/mgmt4:  -- Port 0001 tagged=0 portcost=20000000 role=Root
+/tmp/mgmt4:  -- Port 0002 tagged=0 portcost=20000000 role=Alternate/Backup
+/tmp/mgmt4:  -- Port 0003 tagged=0 portcost=20000000 role=Alternate/Backup
+</pre>
+
+<BR>
+<img src="http://wiki.virtualsquare.org/images/f/f2/Fstp_bonus_result.png" height="279" width="345">
+<ul><li> Now the switch vde2 is reached with lower cost than other links passing through vde1 switch.
+</li><li> In this way higher cost links are kept for backup purpose in case of failures on designated links.
+</li></ul>
+</div>
+
+</div>
+<div style="clear: both;">
+</div>
+</div>
+
+<a name="VDEBNet"></a><h2 class="firstHeading">VDE Basic Networking
+<a href="http://wiki.virtualsquare.org/wiki/index.php/VDE_Basic_Networking">(Source
+Origin)</a></h2>
+	<h4 id="siteSub">From VirtualSquare</h4>
+								
+<p>VDE is the Virtual Distributed Ethernet. You can use it to connect virtual
+machines or linux boxes or any combination of the two.
+Like a real modern Ethernet network a VDE is composed by switches and
+cables.
+Each switch has several sockets where machines can be "plugged-in".
+</p>
+<table id="toc" class="toc" summary="Contents"><tbody><tr><td><div id="toctitle"><h3>Contents</h3> <span class="toctoggle">[<a href="javascript:toggleToc()" class="internal" id="togglelink">hide</a>]</span></div>
+<ul>
+<li class="toclevel-1"><a href="#Two_virtual_machines_connected_by_a_VDE_switch"><span class="tocnumber">1</span> <span class="toctext">Two virtual machines connected by a VDE switch</span></a>
+<ul>
+<li class="toclevel-2"><a href="#Step_1:_start_the_switch"><span class="tocnumber">1.1</span> <span class="toctext">Step 1: start the switch</span></a></li>
+<li class="toclevel-2"><a href="#Step_2:_run_a_QEMU.2FKVM_virtual_machine"><span class="tocnumber">1.2</span> <span class="toctext">Step 2: run a QEMU/KVM virtual machine</span></a>
+<ul>
+<li class="toclevel-3"><a href="#Step_2a:_Connecting_with_natively:"><span class="tocnumber">1.2.1</span> <span class="toctext">Step 2a: Connecting with natively:</span></a></li>
+<li class="toclevel-3"><a href="#Step_2b:_Connecting_old_vdeq_wrapper:"><span class="tocnumber">1.2.2</span> <span class="toctext">Step 2b: Connecting old vdeq wrapper:</span></a></li>
+</ul>
+</li>
+<li class="toclevel-2"><a href="#Step_3:_run_a_User-Mode_Linux"><span class="tocnumber">1.3</span> <span class="toctext">Step 3: run a User-Mode Linux</span></a>
+<ul>
+<li class="toclevel-3"><a href="#Step_3a:_Connecting_with_new_vde_backend:"><span class="tocnumber">1.3.1</span> <span class="toctext">Step 3a: Connecting with new vde backend:</span></a></li>
+<li class="toclevel-3"><a href="#Step_3b:_Connecting_with_old_daemon_backend:"><span class="tocnumber">1.3.2</span> <span class="toctext">Step 3b: Connecting with old daemon backend:</span></a></li>
+</ul>
+</li>
+<li class="toclevel-2"><a href="#Step_4:_test_the_results"><span class="tocnumber">1.4</span> <span class="toctext">Step 4: test the results</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1"><a href="#A_VDE-Switch_connected_to_the_Internet"><span class="tocnumber">2</span> <span class="toctext">A VDE-Switch connected to the Internet</span></a>
+<ul>
+<li class="toclevel-2"><a href="#Slirp:_a_virtual_NAT_router_as_a_process"><span class="tocnumber">2.1</span> <span class="toctext">Slirp: a virtual NAT router as a process</span></a></li>
+<li class="toclevel-2"><a href="#Connecting_the_switch_to_a_tap_interface"><span class="tocnumber">2.2</span> <span class="toctext">Connecting the switch to a tap interface</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1"><a href="#Connecting_VDE-switched_together"><span class="tocnumber">3</span> <span class="toctext">Connecting VDE-switched together</span></a>
+<ul>
+<li class="toclevel-2"><a href="#Step_1:_run_several_switches"><span class="tocnumber">3.1</span> <span class="toctext">Step 1: run several switches</span></a></li>
+<li class="toclevel-2"><a href="#Step2:_connect_them_together"><span class="tocnumber">3.2</span> <span class="toctext">Step2: connect them together</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1"><a href="#Dump_or_Monitor_switch_traffic"><span class="tocnumber">4</span> <span class="toctext">Dump or Monitor switch traffic</span></a>
+<ul>
+<li class="toclevel-2"><a href="#1._Dump_traffic"><span class="tocnumber">4.1</span> <span class="toctext">1. Dump traffic</span></a></li>
+<li class="toclevel-2"><a href="#2._Monitor_traffic"><span class="tocnumber">4.2</span> <span class="toctext">2. Monitor traffic</span></a></li>
+</ul>
+</li>
+</ul>
+</td></tr></tbody></table><script type="text/javascript"> if (window.showTocToggle) { var tocShowText = "show"; var tocHideText = "hide"; showTocToggle(); } </script>
+<a name="Two_virtual_machines_connected_by_a_VDE_switch"></a><h3> <span class="mw-headline"> Two virtual machines connected by a VDE switch </span></h3>
+<a name="Step_1:_start_the_switch"></a><h4> <span class="mw-headline"> Step 1: start the switch </span></h4>
+<p>Each switch has a directory where it keeps all its temporary files. This directory is also used as the <i>name</i> of the switch.
+</p>
+<pre>$ vde_switch -s /tmp/switch1
+</pre>
+<p>This switch runs as a foreground process, so the shell prompt will not be returned. If you type <i>Enter</i> you'll have the prompt of the configuration interface of the switch itself. Type <i>help</i> if you want to see the command list and syntax.
+</p>
+<a name="Step_2:_run_a_QEMU.2FKVM_virtual_machine"></a><h4> <span class="mw-headline"> Step 2: run a QEMU/KVM virtual machine </span></h4>
+<p>You can connect QEMU/KVM to VDE using two different transports:
+the old <i>vdeq</i> wrapper and native support.
+</p>
+<a name="Step_2a:_Connecting_with_natively:"></a><h5> <span class="mw-headline"> Step 2a: Connecting with natively: </span></h5>
+<p>If you use qemu &gt; 0.9.1 or kvm &gt;= 72, both compiled with <i>--enable-vde</i>
+you can use native VDE support. Please refer to official qemu/kvm documentation
+to setup the network with VDE.
+</p>
+<a name="Step_2b:_Connecting_old_vdeq_wrapper:"></a><h5> <span class="mw-headline"> Step 2b: Connecting old vdeq wrapper: </span></h5>
+<pre>$ vdeq qemu -hda qemu-image -m 128 
+</pre>
+<p>The command vdeq runs qemu and automagically defines a vde network interface. Change <i>-hda qemu-image -m 128</i> with your favourite qemu flags.
+If it is installed in your system (AFAIK all distribution supporting vde do it) you can also use the shorten
+form:
+</p>
+<pre>$ vdeqemu -hda qemu-image -m 128 
+</pre>
+<p>Set the networking support of the operating system running on the
+qemu virtual machine. For example if it is some flavour of GNU-Linux
+you can type:
+</p>
+<pre>qemu-linux$ ifconfig eth0 10.0.0.1 netmask 255.255.255.0 up
+</pre>
+<a name="Step_3:_run_a_User-Mode_Linux"></a><h4> <span class="mw-headline"> Step 3: run a User-Mode Linux </span></h4>
+<p>You can connect User-Mode Linux to VDE using two different
+transports: the old <i>daemon backend</i>, originally written for uml_switch
+or the new <i>vde backend</i> which offers much more configuration flexibility.
+</p>
+<a name="Step_3a:_Connecting_with_new_vde_backend:"></a><h5> <span class="mw-headline"> Step 3a: Connecting with new vde backend: </span></h5>
+<p>If you're planning to use new vde backend you should use at least a 2.6.24-rc1 guest kernel.
+</p><p>Note: Linux vanilla 2.6.25 and newer versions need a bugfix (we submitted it several times but it has not
+been committed to the mainstream yet):
+</p>
+<pre>--- linux-2.6.28.2/arch/um/drivers/vde_user.c   2009-01-25 01:42:07.000000000 +0100
++++ linux-2.6.28.2-vde/arch/um/drivers/vde_user.c       2009-02-01 11:07:40.000000000 +0100
+@@ -78,7 +78,7 @@
+ {
+        struct vde_open_args *args;
+ 
+-       vpri-&gt;args = kmalloc(sizeof(struct vde_open_args), UM_GFP_KERNEL);
++       vpri-&gt;args = uml_kmalloc(sizeof(struct vde_open_args), UM_GFP_KERNEL);
+        if (vpri-&gt;args == NULL) {
+                printk(UM_KERN_ERR "vde_init_libstuff - vde_open_args "
+                       "allocation failed");
+</pre>
+<p>User-Mode-Linux with VDE requires a larger stack for kernel
+processes. During the kernel configuration
+phase (make ARCH=um menuconfig) set the option named "Kernel stack size
+order" (under the "UML-specific options" menu) to 1 or higher.
+Alternatively you can edit by hand the .config file: search the tag
+'CONFIG_KERNEL_STACK_ORDER' and change it as follows:
+</p>
+<pre>CONFIG_KERNEL_STACK_ORDER=1
+</pre>
+<p>When the kernel is ready start the UML machine in this way:
+</p>
+<pre>$ linux ubd0=uml-image mem=128k eth0=vde,/tmp/switch1
+</pre>
+<p>Obviously change 'ubd0=uml-image mem=128k' with your user-mode linux flags.
+</p><p><br>
+Set the networking of the User-Mode linux machine as follows:
+</p>
+<pre>uml-linux$ ifconfig eth0 10.0.0.2 netmask 255.255.255.0 up
+</pre>
+<p>Whole syntax of vde backend is:
+</p><p><i>ethN=vde,&lt;vde_switch&gt;,&lt;mac addr&gt;,&lt;port&gt;,&lt;group&gt;,&lt;mode&gt;,&lt;description&gt;</i>
+</p>
+<a name="Step_3b:_Connecting_with_old_daemon_backend:"></a><h5> <span class="mw-headline"> Step 3b: Connecting with old daemon backend: </span></h5>
+<pre>$ linux ubd0=uml-image mem=128k eth0=daemon,,,/tmp/switch1/ctl
+</pre>
+<p>Obviously change 'ubd0=uml-image mem=128k' with your user-mode linux flags. Remember to add ctl to the name of the switch.
+Set the networking of the User-Mode linux machine as follows:
+</p>
+<pre>uml-linux$ ifconfig eth0 10.0.0.2 netmask 255.255.255.0 up
+</pre>
+<a name="Step_4:_test_the_results"></a><h4> <span class="mw-headline"> Step 4: test the results </span></h4>
+<p>The two virtual machines are now virtually connected.
+You can try the following:
+</p>
+<pre>qemu-linux$ ping 10.0.0.2
+uml-linux$ ping 10.0.0.1
+</pre>
+<p>In the same way you can add several virtual machines to the virtual
+network. Some virtual machines (e.g. qemu)
+have built-in MAC addresses for their virtual Ethernet Interfaces, so
+if you start several virtual machines of the same kind they cannot
+communicate together (they have all the same physical address!).
+For Qemu the solution is to manually set up their mac address as
+follows:
+</p>
+<pre>$ vdeqemu -net vde,vlan=0 -net nic,vlan=0,macaddr=52:54:00:00:AA:02 -hda qemu-image1 -m 128 
+$ vdeqemu -net vde,vlan=0 -net nic,vlan=0,macaddr=52:54:00:00:AA:04 -hda qemu-image2 -m 128 
+</pre>
+<p>NB: The first byte of all MAC addresses assigned to hosts must be <b>even</b>.
+An address with odd value in the first byte is by definition a
+broadcast or multicast address, thus the switches cannot work properly.
+This limitation holds both on VDE and on real Ethernets (although it is
+very rare to assign by hand a MAC address on real ethernet interfaces).
+e.g. a mac address of the form xy:xx:xx:xx:xx:xx can be assigned to a
+host only if y gets one of the following values 0,2,4,6,8,a,c,e.
+</p>
+<a name="A_VDE-Switch_connected_to_the_Internet"></a><h3> <span class="mw-headline"> A VDE-Switch connected to the Internet </span></h3>
+<a name="Slirp:_a_virtual_NAT_router_as_a_process"></a><h4> <span class="mw-headline"> Slirp: a virtual NAT router as a process </span></h4>
+<p>The siplest way to connect your virtual network to the Internet is
+slirp. Slirp is a process that appear as a
+router on the virtual network. The slirp process forwards all the
+communications coming from the virtual network to the Internet. </p><p>Start slirpvde prior to boot the virtual machine as follows:
+</p>
+<pre>$ slirpvde -s /tmp/switch1 --dhcp
+</pre>
+<p>Now boot your virtual machines and let them keep their address using automatic configuration (dhcp).
+They'll receive addresses like 10.0.2.xxx and you'll be able to use your favourite networking commands
+to access the Internet (provided that they are IPv4 clients, IPv6 is unsupported yet).
+</p>
+<a name="Connecting_the_switch_to_a_tap_interface"></a><h4> <span class="mw-headline"> Connecting the switch to a tap interface </span></h4>
+<p>This feature requires access to the tuntap facility (/dev/net/tun on linux), usually this means root access.
+</p>
+<pre># vde_switch -s /tmp/switch1 -tap tap0 -m 666
+</pre>
+<p>The switch starts with a port connected to the virtual interface
+tap0. The -m flag is required to allow user
+virtual machines to join the network, otherwise all the virtual
+machines are required to run as root.
+The host machine is now connected to the virtual network. It is
+possible to use all the bridging/routing/firewalling/dhcp/tracing
+support provided by the hosting operating system for the virtual
+network.
+</p><p>Several distributions provide startup scripts or ifup/ifdown configurations to start switch at boot time.
+</p>
+<a name="Connecting_VDE-switched_together"></a><h3> <span class="mw-headline"> Connecting VDE-switched together </span></h3>
+<a name="Step_1:_run_several_switches"></a><h4> <span class="mw-headline"> Step 1: run several switches </span></h4>
+<p>On the same computer you can run several switches, provided they have different names:
+</p>
+<pre>$ vde_switch -s /tmp/switch1
+$ vde_switch -s /tmp/switch2
+</pre>
+<p>It is possible to run switches on different computers:
+</p>
+<pre>host1$ vde_switch -s /tmp/switch
+host2$ vde_switch -s /tmp/switch
+</pre>
+<a name="Step2:_connect_them_together"></a><h4> <span class="mw-headline"> Step2: connect them together </span></h4>
+<p>It is straightforward simple:
+</p>
+<pre>$ dpipe vde_plug /tmp/switch1 = vde_plug /tmp/switch2
+</pre>
+<p>dpipe is a double pipe: the two commands separated by a <i>=</i> sign are mutually interconnected: the output of the first is the input for the second and viceversa.
+In this way the two plugs <i>plugged-in</i> the two switches exchange their packets...
+</p><p>If the switch are running on different computers we need a wire,
+i.e. a program able to forward a stream connection from a computer to
+the other. <i>ssh</i> is the simplest (safe and quite fast) example
+</p>
+<pre>host1$ dpipe vde_plug /tmp/switch = ssh host2 vde_plug /tmp/switch
+</pre>
+<p>when the switch are connected all the virtual (and real) machines
+connected to one can communicate with those connected to the other. It
+has exactly the same effect for real (physical, not-virtual) ethernet
+of connecting
+a cross-cable between two switches.
+</p><p>Obviously several switches can be conntected in the same way.
+Remember that all the problems of the Ethernet do exist in the virtual Ethernet. For example cycles on the
+network are allowed only if the fast spanning tree protocol is enable otherwise the packets loop on the
+network saturating the channels.
+</p>
+<a name="Dump_or_Monitor_switch_traffic"></a><h3><span class="mw-headline"> Dump or Monitor switch traffic </span></h3>
+<p>You can dump or monitor traffic using <b>pdump</b> plugin.
+Nowadays if you want to use VDE with plugins support you must compile
+passing <i>--enable-experimental</i> flag to <i>./configure</i>.
+</p>
+<a name="1._Dump_traffic"></a><h4><span class="mw-headline"> 1. Dump traffic </span></h4>
+<p>Start <i>vde_switch</i>, then from its console load and activate <i>pdump</i>:
+</p>
+<pre>$ vde_switch -F -s /tmp/switch1
+
+
+vde$ plugin/add /usr/local/lib/vde2/plugins/pdump.so
+1000 Success
+
+vde$ pdump/active 1
+0000 DATA END WITH '.'
+.
+1000 Success
+
+vde$ 
+</pre>
+<p>Then, when you want to stop your dump:
+</p>
+<pre>vde$ pdump/active 0
+0000 DATA END WITH '.'
+.
+1000 Success
+
+vde$ 
+</pre>
+<p>You will find a <b>vde_dump.cap</b> file in your working directory.
+</p>
+<a name="2._Monitor_traffic"></a><h4> <span class="mw-headline"> 2. Monitor traffic </span></h4>
+<p>We're going to write switch traffic into a FIFO and then use <i>wireshark</i> to monitor.
+</p><p>First, create the FIFO:
+</p>
+<pre>$ mkfifo /tmp/myfifo
+</pre>
+<p>Then, instead of type the commands directly into the switch, we create a configuration
+file (let's call it <b>vde_pdump.conf</b>) containing the following lines:
+</p>
+<pre>plugin/add /usr/local/lib/vde2/plugins/pdump.so
+pdump/filename /tmp/myfifo
+pdump/buffered 0
+pdump/active 1 
+</pre>
+<p>Now start <i>vde_switch</i>:
+</p>
+<pre>$ vde_switch -F -s /tmp/switch1 -f vde_pdump.conf
+</pre>
+<p>At this point the switch will hang waiting for the other side of the FIFO to be opened,
+so type
+</p>
+<pre>$ wireshark -i /tmp/myfifo
+</pre>
+<p>and then start a new live capture (if you don't want the switch to hang simply start a new
+live capture first).
+</p>
+
+</body></html>

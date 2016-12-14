@@ -1,0 +1,1178 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> 
+<html><head><title>Running Minix3 on Linux with KVM  and TAP Network</title> 
+      </head> 
+   <body> 
+<h3>LX11DE</h3> 
+ 
+<P> The Lightweight X11 Desktop Environment from Debian automatically prepares 
+your host system to be virtualization ready.   
+
+<h3><a href="http://en.wikipedia.org/wiki/MINIX_3" target="newwindow">MINIX 3 Wiki</a> 
+&nbsp;&nbsp;<a href="http://www.minix3.org" target="newwindow">Minix Home Page</a>
+&nbsp;&nbsp;<a href="http://wiki.minix3.org/doku.php?id=usersguide:doinginstallation" 
+target="newwindow">Installing MINIX 3</a>&nbsp;&nbsp;
+<a href="http://wiki.minix3.org/doku.php?id=usersguide:start">MINIX 3 Users 
+Guide</a>&nbsp;&nbsp;
+<a href="http://wiki.minix3.org/doku.php?id=usersguide:runningonqemu" 
+target="newwindow">Running Minix On Qemu</a>&nbsp;&nbsp;
+<a href="http://wiki.minix3.org/doku.php?id=www:download:releasenotes-3.3.0" 
+target="newwindow">Download Minix3 CD-ROM Iso</a>&nbsp;&nbsp;
+</h3>
+
+<P>Current stable version 3.3.0. (Dec/02/2014)
+
+<h3><a href="http://amdm/pub/" target="newwindow">MINIX 3 Local Mirror</a></h3>
+
+<P> Using <b>MirroringMinix3.sh</b>, (in <code>Downloads/Minix3Mirror</code> directory), 
+  to mirror new packages and scp to <code>/src2/pub/minix/packages</code> directory.
+
+<PRE>
+$ more ../Down*/Minix*/MirroringMinix3.sh
+#! /bin/bash
+
+wget -r --tries=10 ftp://ftp.minix3.org/pub/minix/packages/3.3.0/ -o log 
+$ diff /usr/pkg/etc/pkgin/repositories.conf /usr/pkg/etc/pkgin/repositories.conf.orig
+10c10
+< http://140.120.7.21/pub/minix/packages/3.3.0/i686/All
+---
+> ftp://ftp.minix3.org/pub/minix/packages/3.2.1/i686/All
+$ su 
+# pkgin update       # Creates and populates the initial database.
+# pkgin              # List available command options
+# pkgin full-upgrade # Upgrade all packages to their newer versions.
+# pkgin clean        # Clean packages cache. 
+# pkgin autoremove   # Autoremove orphan dependencies.
+</PRE>
+
+
+<h3>Good news! Minix 3.1.6 is much easier to install!</h3>
+<h3>Creating Minix3 Image:</h3> 
+ 
+<PRE> 
+ # $ rm minix*img ;; If such file exists, we are going to create a new one.
+ # For complete installation of Minix3.3, at least 10G free space, 12G or more will be 
+ # more suitable.
+ $ qemu-img create minix3-3-0.img 3G
+ $ sudo kvm -no-kvm -localtime -net user -net nic -m 512 -cdrom minix_R3.3.0-588a35b.iso -hda minix3-3-0.img -boot d
+</pre> 
+ 
+<P> <b>Note: (07/23/2009)</b> 2GB will be enough for the whole Minix system, including  
+  800MB <code>/home</code> directory.  But, I think, it is worthwhile to install  
+  Minix3 source packages, too.  Also, harddisk space is dirt cheap. 
+
+<p>With the above command, qemu takes over to boot Minix. After booting, we get a login 
+prompt. On the login prompt, login as root, no password is required. After login, we 
+can start the installation by issuing the command <b>setup</b>.  When setup goes on, 
+it will ask the Ethernet device used in your computer, choose 12, virtual ether card. 
+When asking the size of home directory, take the default 1094.  Everything else just 
+takes the default.  Passionately waiting for the bad block scanning process to end (35 
+minutes!) After selecting these two options setup will take you to several other 
+prompts which  are quite self explanatory. Once setup is completed, shutdown the Minix 
+installation.  At the last prompt, type <b>off</b> to bring down the qemu window. 
+ 
+<PRE> 
+ # setup 
+ # reboot 
+</PRE> 
+
+<P> Minix 3 offers to setup network:
+
+<h4>Minix3-3 Network</h4>
+
+<OL>
+  <LI># netconf
+
+     <P> Choose 12 Virtio network device
+  <LI>$ bin/vhostOn.sh
+     <P> This will create <code>/dev/vhost-net</code>
+  <LI> Modify nic,vlan=0 to nic,model=virtio
+
+<PRE>
+$ ls -l *4*
+-rwxr-xr-x 1 hsu hsu 1021 May  4 18:30 start-Minix3-3-4
+-rwxr-xr-x 1 hsu hsu 1015 May  4 17:13 start-Minix3-3-4.orig
+-rwxr-xr-x 1 hsu hsu 1048 May  4 17:13 start-Minix3-3-4-AsDaemon
+-rwxr-xr-x 1 hsu hsu 1783 May  4 17:13 stop-Minix3-3-restore-lan-4
+$ diff start-Minix3-3-4 start-Minix3-3-4.orig
+23c23
+< kvm -net vde,vlan=0,sock=/src3/KVM/network-3370 -net nic,model=virtio,macaddr=1c:6f:65:10:3e:ef -m 512M -monitor unix:/src3/KVM/network-3370/MonSock,server,nowait -hda ../minix3.3.img &
+---
+> kvm -net vde,vlan=0,sock=/src3/KVM/network-3370 -net nic,vlan=0,macaddr=1c:6f:65:10:3e:ef -m 512M -monitor unix:/src3/KVM/network-3370/MonSock,server,nowait -hda ../minix3.3.img &
+</PRE>
+
+</OL>
+
+<h4>Old Stuff, kept for reference purpose.</h4>
+
+<OL>
+  <LI> Virtual network device (, Earlier Minix: Ether card: 8139).
+     <P> You have no choice, since it is the one emulated by KVM
+  <LI> Network Setup:
+  <OL>
+   <LI> Do it manually
+   <LI> Ip address: 192.168.0.250
+   <LI> Gateway: 192.168.0.32 (the IP of physical host machine)
+   <LI> DNS servers: Get them from host <code>/etc/resolv.conf</code>
+  </OL>
+  <LI> File <b>/etc/rc.net</b>, now automatically generated during setup!  
+   Automatically invoked during system boot.
+<PRE> 
+$ more /etc/rc.net
+ifconfig -I /dev/ip0 -n 255.255.255.0 -h 192.168.0.250
+add_route -g 192.168.0.254
+daemonize nonamed -L
+</PRE> 
+</OL> 
+ 
+ 
+<h3>The Old Trick</h3> 
+ 
+<P> The way we automatically start and stop UML virtual machines can be adopted to  
+Minix3 booting.  Look at the following scripts, don't you think everything is so  
+familiar? Do we learn anything new? Ah! Yes, we found out what we have learned in  
+the past is still useful! 
+ 
+<PRE> 
+$ diff start-Minix3.1.6 start-kvm-001
+20,21c20,21
+< echo "Starting Minix 3..."
+< vdekvm -net vde,vlan=0,sock=/src3/KVM/network-3482 -net nic,vlan=0,macaddr=00:01:29:94:8e:3f  -m 512 -hda ../minix3-1-6.img &
+---
+> echo "Starting VM: kvm-001..."
+> vdekvm -net vde,vlan=0,sock=/src3/KVM/network-3482 -net nic,vlan=0,macaddr=00:01:29:94:8e:3f -hda ../Ubuntu.img &
+$ ls -l stop-Minix3-restore-lan 
+lrwxrwxrwx 1 hsu hsu 24 Jul 24 08:54 stop-Minix3-restore-lan -> stop-kvm-001-restore-lan 
+$ more start-Minix3.1.6
+#! /bin/bash
+
+if [ $EUID -ne 0 ]
+   then echo "You need super user privilege for this script"
+        exit 1
+fi
+
+sudo chmod 666 /dev/net/tun
+sudo tunctl -u hsu -t tap0
+sudo ifconfig tap0 192.168.0.254 netmask 255.255.255.255 up
+sudo iptables --table nat -A POSTROUTING --out-interface eth1 -j MASQUERADE
+sudo iptables -A FORWARD --in-interface tap0 -j ACCEPT
+sudo chmod 666 /dev/net/tun # First time only get 660
+sudo sysctl net.ipv4.ip_forward=1
+sudo sysctl net.ipv4.conf.tap0.proxy_arp=1
+sudo arp -Ds 192.168.0.250 eth1 pub
+sudo route add -host 192.168.0.250 dev tap0
+echo "Starting vde_switch..."
+vde_switch -tap tap0 -mod 644 -sock=/src3/KVM/network-3482 -mgmt /src3/KVM/netwo
+rk-3482/vde_switch.mgmt -daemon </dev/null >/dev/null
+echo "Starting Minix 3..."
+vdekvm -net vde,vlan=0,sock=/src3/KVM/network-3482 -net nic,vlan=0,macaddr=00:01
+:29:94:8e:3f  -m 512 -hda ../minix3-1-6.img &
+</PRE> 
+
+<P> Up to now, using the above script, you may start Minix3 and ping it, i.e. the 
+network is established but you can not ssh to it, since ssh_config and sshd_config
+are not yet configured.  For this we need emacs, etc.  Also, we need to create our 
+own account, etc.  Remember to restore our lan via restore-lan script after shutdown.
+ 
+<h3>Installing More Packages:</h3> 
+ 
+<PRE> 
+$ vdekvm -net vde,vlan=0,sock=/src3/KVM/network-3482 -net nic,vlan=0,macaddr=00:01:29:d2:07:01 -cdrom ../minix_R3.1.6-r6084.iso -hda ../minix3-1-6.img&
+# I believe we have enough space, let us install all the binary and source packages. 
+# which packman
+/usr/bin/packman
+# packman
+# more /etc/group
+# man adduser
+# adduser hsu other /home/hsu
+# passwd hsu 
+# cat /etc/hosts # Automatically generated during setup
+192.168.0.250	%nameserver	#minix
+168.95.192.1	%nameserver	#DNS 1
+140.120.1.2	%nameserver	#DNS 2
+
+192.168.0.250	minix
+# emacs /usr/X11R6/lib/X11/xdm/Xaccess
+# emacs /usr/local/etc/ssh/ssh_config
+# emacs /usr/local/etc/ssh/sshd_config
+# Remember to mv the three backup *~ files to *.orig
+</PRE> 
+
+<h3>Shut Down Minix</h3> 
+
+<P><b>Note: (01/14/2011)</b> Must execute <code>stop-Minix3-1-6-restore-lan-3</code>
+twice in two different X terms, since the first execution of it will hang the X term,
+(caused by the <b>poweroff</b> command in the script). The rest commands for restoring
+the network would not be executed.  
+
+<PRE>
+$ ls -l /usr/bin/shutdown
+-rwsr-xr-- 1 root  operator  49580 Feb  4  2010 /usr/bin/shutdown
+$ su  
+# chmod 4755 /usr/bin/shutdown
+# ls -l /usr/bin/shutdown
+-rwsr-xr-x 1 root  operator  49580 Feb  4  2010 /usr/bin/shutdown
+# more /usr/bin/poweroff
+
+#!/bin/sh
+#
+# poweroff 1.0 - power off the system		Author: David van Moolenbroek
+#								  12 Jun 2009
+
+if [ $# -gt 0 ]; then
+  echo "usage: poweroff" >&2
+  exit 1
+fi
+
+PATH=/usr/bin:$PATH
+
+exec shutdown -x off
+</PRE>
+
+<h3>Starting X and network</h3> 
+ 
+<OL> 
+  <LI> $ ssh -X hsu@192.168.0.250 # Execute this in physical host.
+ 
+<P> Always get a remote shell ready so that we can kill unwanted or runaway processes. 
+   If necessary, su to root, then shutdown Minix3 remotely.  The <b>qemu</b> window 
+   wouldn't be pretty, still type <b>off</b> on it can bring it down gracefully!! 
+ 
+  <LI> There is no /etc/hostname file, only /etc/hostname.file. 
+ 
+<P> This file is automatically prepared during system boot. And minix3 has no  
+  hostname command.
+ 
+  <LI> <b>nonamed</b>:  
+ 
+<PRE> 
+ $ man nonamed 
+ $ man 8 boot 
+ $ man 5 resolver 
+</PRE> 
+ 
+  <P> <b>nonamed</b>, Not a name daemon, is the name resolution daemon provided  
+by Minix3.   
+ 
+ 
+<PRE> 
+ $ cat /etc/hosts 
+[  1 ] 192.168.0.250	%nameserver	#minix
+[  2 ] 168.95.192.1	%nameserver	#DNS 1
+[  3 ] 140.120.1.2	%nameserver	#DNS 2
+
+[  5 ] 192.168.0.254    deb-g
+[  6 ] 192.168.0.250	minix
+[  7 ] 140.120.7.19     as
+[  8 ] 140.120.7.21     amdm
+$ diff /etc/hosts /etc/hosts.orig
+5d4
+< 192.168.0.254    deb-g
+7,8d5
+< 140.120.7.19     as
+< 140.120.7.21     amdm
+</PRE> 
+  <P> The above line numbers, not in the /etc/hosts file, were added for reference  
+purpose.  
+ 
+<OL> 
+  <LI> nonamed caches its own finding so that it can function properly even if it  
+    is not online.  Also, it speeds up IP resolution request.  The first three  
+    lines setup the default cache business. 
+  <LI> Lines 1, 2, 3: Record the nameservers Minix3 can consult for the name to ip  
+    resolution if the name is not in the /etc/hosts file. 
+  <LI> The syntax of this /etc/hosts file is similar to the same file in 
+    Debian/Ubuntu environment. With the above hosts file, I can remote login amdm via
+
+<PRE>
+$ ssh -X hsu@amdm                  
+</PRE> 
+
+  <LI> The <b>nonamed</b> daemon is invoked in <code>/etc/rc.net</code> during system  
+    boot.  Its pid is recorded in the <code>/usr/run/nonamed.pid</code> file. 
+  <LI> If things ever go wrong, files in <code>/usr/log</code> directory accumulate  
+    error messages rapidly. Very soon, the filesystem full message will show up. 
+    Check their file sizes from time to time during X system tuning. If things 
+    go smoothly, no need to worry about them. 
+</OL> 
+ 
+  <LI> <b>startx</b> commond is more civilized 
+ 
+  <P> You may bring up X window system (as a normal user) via <b>xdm</b>, <b>xinit</b>, 
+  or <b>startx</b>.  For the first two commands, I have no idea how to bring down the 
+  X system gracefully.  For <b>startx</b>, exit all xterms, X system will also be done 
+  automatically. 
+ 
+  <LI> No <code>/etc/resolv.conf</code> file is needed
+ 
+</OL> 
+ 
+<h3>Files Edited for Xdm to work:</h3> 
+ 
+<PRE> 
+/usr/X11R6/lib/X11/xdm/Xaccess
+/usr/X11R6/etc/xorg.conf 
+/usr/local/etc/ssh/ssh_config 
+/usr/local/etc/ssh/sshd_config 
+$ diff /usr/X11R6/lib/X11/xdm/Xaccess /usr/X11R6/lib/X11/xdm/Xaccess.orig
+49c49 
+< !*					#any host can get a login window 
+--- 
+> #*					#any host can get a login window 
+67c67 
+< !*		CHOOSER BROADCAST	#any indirect host can get a chooser 
+--- 
+> #*		CHOOSER BROADCAST	#any indirect host can get a chooser 
+ 
+########################################################################## 
+# xorg.conf: Yes, we do need this file.   I got it from Debian LXDE and 
+# edit it slightly, such as "device vesa".  Without it, after close down 
+# startx, our console is no longer readable, although we still can issue 
+# shutdown command in it.
+# $ cp /etc/X11/xorg.conf /tmp
+# $ edit /tmp/xorg.conf
+# The difference is as follows 
+########################################################################## 
+# hsu@debian-gateway:/src3/KVM/bin$ diff /tmp/xorg.conf /etc/X11/xorg.conf
+# 32d31
+# <         Driver          "vesa" 
+# 45d43
+# <         Device          "Configured Video Device"
+# $ scp /tmp/xorg.conf minix:/tmp
+# In minix, # cp /tmp/xorg.conf /usr/X11R6/etc/
+# $ ls /usr/X11R6/etc/xorg.conf
+# /usr/X11R6/etc/xorg.conf
+########################################################################## 
+$ cat /usr/X11R6/etc/xorg.conf 
+# xorg.conf (X.Org X Window System server configuration file)
+#
+# This file was generated by dexconf, the Debian X Configuration tool, using
+# values from the debconf database.
+#
+# Edit this file with caution, and see the xorg.conf manual page.
+# (Type "man xorg.conf" at the shell prompt.)
+#
+# This file is automatically updated on xserver-xorg package upgrades *only*
+# if it has not been modified since the last upgrade of the xserver-xorg
+# package.
+#
+# If you have edited this file but would like it to be automatically updated
+# again, run the following command:
+#   sudo dpkg-reconfigure -phigh xserver-xorg
+
+Section "InputDevice"
+	Identifier	"Generic Keyboard"
+	Driver		"kbd"
+	Option		"XkbRules"	"xorg"
+	Option		"XkbModel"	"pc104"
+	Option		"XkbLayout"	"us"
+EndSection
+
+Section "InputDevice"
+	Identifier	"Configured Mouse"
+	Driver		"mouse"
+EndSection
+
+Section "Device"
+	Identifier	"Configured Video Device"
+        Driver          "vesa" 
+EndSection
+
+Section "Monitor"
+	Identifier	"Configured Monitor"
+        # 1280x1024 @ 75.00 Hz (GTF) hsync: 80.17 kHz; pclk: 138.54 MHz
+        Modeline "1280x1024_75.00"  138.54  1280 1368 1504 1728  1024 1025 1028 1069  -HSync +Vsync
+        Option      "PreferredMode"      "1280x1024_75.00" 
+EndSection
+
+Section "Screen"
+	Identifier	"Default Screen"
+	Monitor		"Configured Monitor"
+        Device          "Configured Video Device"
+        DefaultDepth   24 
+        SubSection "Display" 
+           Depth   24 
+           Modes   "1280x1024_75.00" 
+        EndSubSection 
+EndSection
+$ diff /usr/local/etc/ssh/ssh_config /usr/local/etc/ssh/ssh_config.orig 
+21,22c21,22 
+< ForwardAgent yes 
+< ForwardX11 yes 
+--- 
+> #   ForwardAgent no 
+> #   ForwardX11 no 
+35c35 
+< Port 22 
+--- 
+> #   Port 22 
+$ diff /usr/local/etc/ssh/sshd_config /usr/local/etc/ssh/sshd_config.orig 
+37c37 
+< PermitRootLogin no 
+--- 
+> #PermitRootLogin yes 
+84,86c84,86 
+< X11Forwarding yes 
+< X11DisplayOffset 10 
+< X11UseLocalhost no 
+--- 
+> #X11Forwarding no 
+> #X11DisplayOffset 10 
+> #X11UseLocalhost yes 
+</PRE> 
+ 
+<P> <b>Note:</b> When doing X forwarding, sshd listens on a TCP socket for 
+connections from X clients.  Normally, it will accept connections addressed 
+to the loopback address only (127.0.0.1), restricting it to clients on the 
+local host. "X11UseLocalhost no" means it will accept connections from 
+anywhere. Bad variable name indeed.  <b>X11LocalhostOnly</b> will be much 
+better!
+ <b>Note: (02/04/2009)</b> The above setting seems to cause the <b>startx</b>
+command on the console to fail with the following messages in 
+<code>/usr/log/XLogFile.0.log</code> and console:
+
+<PRE>
+_XSERVTransMakeAllCOTSServerListeners: failed to create listener for local
+xinit: Interrupted system call (errno 4): Server error.
+</PRE>
+
+<h3>Mount qemu minix3 image on Linux host</h3> 
+ 
+<P> Frequently, we would like to mount OS image temporarily on <code>/mnt/tmp</code> 
+ so that we may examine or modify it.  I found out that the nbd (network block device) 
+ module in the linux kernel is rather helpful.  <b>Note</b>: We mount the linux image  
+ overlay in exactly the same fashion!  
+ 
+<PRE> 
+  525  sudo modprobe nbd max_part=8 
+  526  sudo kvm-nbd --connect=/dev/nbd0 minix3-1-6.img 
+<b>Warning:</b> /usr/bin/kvm-nbd: this binary is deprecated, use qemu-nbd instead
+  527  sudo fdisk /dev/nbd0 
+  528  sudo mount /dev/nbd0p1 /mnt/tmp 
+  529  sudo mount -t minix /dev/nbd0p1 /mnt/tmp 
+  530  dmesg | tail 
+  531  ls -l /dev/nbd* 
+  532  sudo mount -t minix /dev/nbd0p5 /mnt/tmp 
+  533  ls -l /mnt/tmp
+  534  sudo umount /mnt/tmp 
+  535  sudo mount -t minix /dev/nbd0p6 /mnt/tmp 
+  536  ls -l /mnt/tmp
+  537  sudo umount /mnt/tmp 
+  538  sudo mount -t minix /dev/nbd0p7 /mnt/tmp 
+  539  ls -l /mnt/tmp
+  540  sudo umount /mnt/tmp 
+  541  sudo kvm-nbd --disconnect minix3-1-6.img 
+  # It seems the command "qemu-nbd --disconnect" isn't implemented properly!
+</PRE> 
+
+ 
+ 
+<h4>Virtual Network via Tap and Swtich</h4> 
+As usual, we resolve network problem via TAP and Switch devices provided in Linux  
+host.  TAP device can be easily created via <b>tunctl</b> command that comes with  
+the uml-utilities.  And for the switch device, we keep on using <b>vde_switch</b>. 
+ 
+<P> The Debian LXDE (Light X11 Desktop Environment) automaically comes with UML 
+utilities installed.  Otherwise, You can install UML utilities as given below in  
+Debian/Ubuntu and Fedora system respectively.  
+ 
+<PRE> 
+ # No need to execute these in 511 environment, things are ready. 
+ $ sudo apt-get install uml-utilities # Debian/Ubuntu 
+ $ sudo yum install uml-utilities # Fedora 
+ $ tunctl -u root -t tap0 # Create tap0 device, tunctl comes with uml-utilities. 
+</PRE> 
+
+<h3>More programs in /usr/gnu/bin</h3> 
+
+<P> In the hidden ash run command file, <code>$HOME/.ashrc</code>, at the end of
+  <b>PATH</b> variable, we add <code>/usr/gnu/bin</code> component so that we can
+  access those commands under it.
+
+<PRE>
+$ diff ashrc.orig .ashrc
+10c10
+< export PATH=$HOME/bin:/usr/local/bin:/bin:/usr/bin:/usr/X11R6/bin
+---
+> export PATH=$HOME/bin:/usr/local/bin:/bin:/usr/bin:/usr/X11R6/bin:/usr/gnu/bin
+$ echo $PATH
+/home/hsu/bin:/usr/local/bin:/bin:/usr/bin:/usr/X11R6/bin:/usr/gnu/bin
+$ ls /usr/gnu/bin | wc -w    
+    120 
+</PRE>
+
+<P> There are far more bin directories in Minix 3 then we are used to in Linux:
+
+<PRE>
+$ find / -type d -name bin 2>/dev/null
+/usr/bin
+/usr/local/bin
+/usr/local/apache/bin
+/usr/local/exim/bin
+/usr/local/gnu/bin
+/usr/local/gpg/bin
+/usr/local/ssl/bin
+/usr/local/pce/bin
+/usr/local/pgsql/bin
+/usr/bigsrc/efltk-2.0.6/bin
+/usr/bigsrc/subversion-1.4.0/doc/tools/bin
+/usr/gnu/bin
+/usr/gnu/i386-pc-minix/bin
+/usr/X11R6/bin
+/usr/X11R6-gcc/bin
+/bin
+/home/bin
+$ ls -l /usr/gnu/i386-pc-minix/bin
+total 10713
+-rwxr-xr-x 2 bin  operator  1191698 Aug 10  2006 ar
+-rwxr-xr-x 2 bin  operator  1847490 Aug 10  2006 as
+-rwxr-xr-x 2 bin  operator  1805717 Aug 10  2006 ld
+-rwxr-xr-x 2 bin  operator  1309815 Aug 10  2006 nm
+-rwxr-xr-x 2 bin  operator  1868456 Jul 31  2006 objdump
+-rwxr-xr-x 2 bin  operator  1191696 Jul 31  2006 ranlib
+-rwxr-xr-x 2 bin  operator  1751671 Jul 31  2006 strip
+</PRE>
+
+
+<h2>Documents for Minix 3</h2>
+<TABLE>
+<TR><TD><a href="http://wiki.minix3.org/en/DevelopersGuide/" 
+   target="newwindow">Minix Developers Guide</a>&nbsp;&nbsp;
+    <TD><a href="http://wiki.minix3.org/en/DevelopersGuide/KernelApi" 
+   target="newwindow">Minix Kernel Api</a>&nbsp;&nbsp;
+    <TD><a href="http://wiki.minix3.org/en/DevelopersGuide/MinixApi" 
+   target="newwindow">Minix Api</a>
+<TR><TD><a href="http://140.120.7.20/backup/KVM-tool/Minix3SyscallExamples.txt"
+   target="_blank">Minix 3 Syscall Examples</a>
+    <TD><a href="http://www.minix3.org/doc/herder_thesis.pdf" 
+   target="_blank">Microkernel Operating System</a>
+    <TD><a href="http://www.cs.vu.nl/~ast/publications/acsac-2006.pdf" 
+   target="_blank">Reorganizing Unix For Reliability</a>&nbsp;&nbsp;
+<TR><TD><a href="http://piotrkosoft.net/pub/mirrors/minix/minix/who_doing_what.html" 
+   target="newwindow">Minix3:WhoIsDoingWhat</a>
+</TABLE>
+
+<h3>Minix 3 Servers:</h3>&nbsp;&nbsp;
+<TR><TD><a href="https://gforge.cs.vu.nl/gf/project/minix/scmsvn/?action=browse&path=%2Ftrunk%2Fsrc%2Fservers%2F" 
+   target="newwindow">Minix Servers</a>
+    <TD><a href="https://gforge.cs.vu.nl/gf/project/minix/scmsvn/?action=browse&path=%2Ftrunk%2Fsrc%2Fservers%2Fmfs%2F" 
+   target="newwindow">File Server</a>
+    <TD><a href="https://gforge.cs.vu.nl/gf/project/minix/scmsvn/?action=browse&path=%2Ftrunk%2Fsrc%2Fservers%2Fpm%2F" 
+   target="newwindow">Process Manager</a>
+<TR><TD><a href="" 
+   target="newwindow"></a>
+    <TD><a href="" 
+   target="newwindow"></a>
+    <TD><a href="" 
+   target="newwindow"></a>
+</TABLE>
+
+<h3>Adding System Call to Minix 3:&nbsp;&nbsp;
+<a href="http://jiachengpeng.net/blog/?p=52" 
+   target="newwindow">1</a>&nbsp;&nbsp; 
+<a href="http://jiachengpeng.net/blog/?p=53" 
+   target="newwindow">2</a>&nbsp;&nbsp; 
+<a href="http://jiachengpeng.net/blog/?p=54" 
+   target="newwindow">3</a>&nbsp;&nbsp; 
+<a href="http://jiachengpeng.net/blog/?p=55" 
+   target="newwindow">Source</a></h3>
+
+
+<a name=HurdKvm><h2>GNU/Hurd Via Kvm</h2></a>
+
+<h3><a href="http://www.gnu.org/software/hurd/" target="newwindow">GNU Hurd</a></h3>
+
+<a href="http://www.gnu.org/software/hurd/news/2015-04-10-releases.html" 
+target="newwindow">GNU Hurd 0.6</a>&nbsp;&nbsp;<a target="newwindow" 
+href="https://people.debian.org/~sthibault/hurd-i386/installer/cdimage/20150420/">Hurd 
+Iso</a>
+
+<h3><a href="http://www.digipedia.pl/usenet/thread/11769/6257/" 
+target="newwindow">Adding -no-kvm-irqchip to the kvm command line</a></h3>
+
+<b>Note: (05/12/2012)</b> Without this option, in rare occasion, while booting Hurd, 
+it hangs on the message "start ext2fs: Hurd server bootstrap..." forever.
+
+<PRE>
+$ diff start-Hurd-2 start-Hurd-2-no-irq
+25c25
+< kvm -net vde,vlan=0,sock=/src3/KVM/network-3099 -net nic,vlan=0,macaddr=00:25:90:06:37:8d -m 512M -monitor unix:/src3/KVM/network-3099/MonSock,server,nowait -hda ../Hurd/Deb-Hurd-L1.img &
+---
+> kvm -no-kvm-irqchip -net vde,vlan=0,sock=/src3/KVM/network-3099 -net nic,vlan=0,macaddr=00:25:90:06:37:8d -m 512M -monitor unix:/src3/KVM/network-3099/MonSock,server,nowait -hda ../Hurd/Deb-Hurd-L1.img &
+</PRE>
+
+<h3>Update to gnumach-1.3.99-486 (07-22-2011)</h3>
+
+<OL>
+  <LI> No ifconfig command.
+<PRE>
+ $ ls -l /usr/bin/ifconfig
+lrwxr-xr-x 1 root root 18 Jul 22 13:34 /usr/bin/ifconfig -> inetutils-ifconfig
+</PRE>
+
+  <LI> inetutils-ifconfig syntax is different
+
+<P> <b>Note (08/08/2011):</b>  Hope this is the proper way to setup network.  Hurd 
+does not supply route and iptables commands.  
+<PRE>
+$ diff /etc/rc.local /etc/rc.local.orig
+19,23c19,20
+< settrans -fgap /servers/socket/2 /hurd/pfinet -i eth0 -a 192.168.0.252 -g 192.168.0.32 -m 255.255.255.0 
+< /etc/init.d/ssh restart
+< 
+< # ifconfig -i eth0 -A 192.168.0.252
+< # route add default gw 192.168.0.32
+---
+> ifconfig -i eth0 -A 192.168.0.252
+> route add default gw 192.168.0.32
+</PRE>
+ 
+<P> <b>ifconfig</b> now needs the -i and -A to indicate interface and address parameters.
+  <LI> /dev/random and /dev/urandom need to be regernated.
+
+<P> Fortunately, the few lines (about /dev/random and /dev/urandom) in our web page 
+   still work! But, the size of <b>/hurd/random</b> (70 or more K) is wrong.  It is 
+   clear that we must copy tmp/random/random to /hurd to replace this wrong server.
+
+  <LI> dpkg-reconfigure openssh-server
+
+<P> We than can remote login hurd.
+  <LI> Download and install network related packages
+
+<PRE>
+$ ls -l  /home/hsu/pkgs
+total 528
+-rw-r--r-- 1 hsu hsu 123464 Jul 22 21:11 inetutils-inetd_1.8-3_hurd-i386.deb
+-rw-r--r-- 1 hsu hsu 144288 Jul 22 21:11 inetutils-ping_1.8-3_hurd-i386.deb
+-rw-r--r-- 1 hsu hsu 127682 Jul 22 21:12 inetutils-syslogd_1.8-3_hurd-i386.deb
+-rw-r--r-- 1 hsu hsu 117488 Jul 22 21:11 inetutils-tools_1.8-3_hurd-i386.deb
+</PRE>
+
+<P> Only successfully install <b>inetutils-ping_1.8-3_hurd-i386.deb</b> and 
+<b>inetutils-tools_1.8-3_hurd-i386.deb</b>.  The <b>route</b> command is still 
+missing.
+</OL>
+ 
+<h3>References:&nbsp;&nbsp;
+<a href="http://www.gnu.org/software/hurd/users-guide/using_gnuhurd.html"
+   target="newwindow">Using Hurd</a>&nbsp;&nbsp;
+<a href="http://www.debian.org/ports/hurd/hurd-install"
+   target="newwindow">Hurd Installation</a>
+</h3>
+
+<P> We need a lot of free disk space and download a few files, create <b>Hurd</b>
+    directory under <b>/src3/KVM</b> and deposit Hurd related files in it.
+
+<PRE>
+ $ cd /src3/KVM/Hurd
+ $ ls -l
+total 5180416
+-rw-r--r--  1 hsu hsu 5368709120 Jan 29 15:07 Deb-Hurd-L1.img
+-rw-r--r--  1 hsu hsu      45490 Jan 29 15:07 ServUsg.html
+-rw-r--r--  1 hsu hsu       1877 Jan 29 15:07 ServUsg.sh
+-rw-r--r--  1 hsu hsu 4525166592 Jan 23 10:58 debian-L1-hurd-i386-DVD1.iso
+-rw-r--r--  1 hsu hsu 1601966080 Jan 24 10:49 debian-hurd-k16-qemu.img
+-rw-r--r--  1 hsu hsu   73335160 Jan 23 19:26 gnu-2009-10-18.tar.gz
+-rw-r--r--  1 hsu hsu     252928 Jan 21 10:57 grub-floppy.img
+-rw-r--r--  1 hsu hsu      88480 Sep 28  2002 random-64.tar.gz
+drwxr-xr-x 17 hsu hsu       4096 Oct 18 11:42 tmp
+</PRE>
+
+<h3>Packages Download</h3>
+
+<OL>
+    <LI> <a href="http://people.debian.org/~sthibault/hurd-i386/installer/cdimage/" 
+   target="newwindow">Current Hurd Image:</a> debian-L1-hurd-i386-DVD1.iso
+    <LI> <a href="http://ftp.debian-ports.org/debian-cd/hurd-i386/K16/" 
+   target="newwindow">debian-hurd-k16-qemu.img.tar.gz</a>
+    <LI> <a href="http://alpha.gnu.org/gnu/grub/" 
+   target="newwindow">grub-0.97-i386-pc.ext2fs</a>&nbsp;&nbsp;
+   <a href="http://alpha.gnu.org/gnu/grub/grub-1.99~rc2.tar.gz" 
+   target="newwindow">grub-1.99~rc2.tar.gz</a>
+    <LI> <a href="http://kilobug.free.fr/hurd/random-64.tar.gz" 
+   target="newwindow">random-64.tar.gz</a>
+</OL>
+
+
+<OL>
+    <LI> Always use the <b>halt</b> or <b>poweroff</b> commands to shutdown Hurd 
+    machine!! It seems the shutdown command does not work. 
+    <LI> debian-L1-hurd-i386-DVD1.iso is used to install Deb-Hurd-L1.img.  
+    <LI> Download grub-0.97-i386-pc.ext2fs and rename it as <b>grub-floppy.img</b>.  
+    We use it to write MBR on Deb-Hurd-L1.img.  
+    <LI> From <b>debian-hurd-k16-qemu.img</b>, we need its <b>/boot/grub</b> directory 
+    contents.
+    <LI> We use random-64.tar.gz to obtain Hurd /dev/random, /dev/urandom device 
+    drivers.  Without it, ssh server can not be configured successfully.  For 
+    security reason, <b>ssh</b> encapsulates your input.  For doing this, it needs 
+    a random number as its seed.  <b>Question:</b> KVM simulates i686 CPU 
+    architecture for the running Hurd System.  Shall we use random-64.tar.gz?
+    So far, it causes no problem, yet. 
+</OL>
+
+<PRE>
+ $ qemu-img create Deb-Hurd-L1.img 5G
+ $ sudo kvm -cdrom  debian-L1-hurd-i386-DVD1.iso -hda Deb-Hurd-L1.img -boot d
+ # Initialize keyboard, Partition Hard Disk, 4600 MB for linux (83), the rest for
+ # Linux Swap (82).  Initialize them by choosing the third and fourth items.
+ # Install base system and reboot and after seeing boot prompt, close the qemu window.
+ $ sudo mount -o loop,offset=32256 Deb-Hurd-L1.img /mnt/tmp 
+ $ ls -l /mnt/tmp/boot
+ # Notice that there is no grub subdirectory.  Thus why booting is bound to fail!
+</PRE>
+
+<P>
+  We need <code>/boot/grub</code> directory contents from debian-hurd-k16-qemu.img,
+since this direcory is not installed automatically in Deb-Hurd-L1.img.  After 
+finishing native-install, grub will be replaced by grub2.  However, without the 
+usual grub directory contents, such as menu.lst, stage1, stage2, etc., we will 
+not be able to boot the GNU/Hurd at all!!
+
+<PRE>
+ $ sudo mount -o loop,offset=32256 Deb-Hurd-L1.img /mnt/tmp
+ $ sudo mount -o loop,offset=32256 debian-hurd-k16-qemu.img /mnt/tmp1
+ $ sudo mkdir /mnt/tmp/boot/grub
+ $ cd /mnt/tmp1/boot/grub
+ $ su
+ # find . -print | cpio -pdm /mnt/tmp/boot/grub
+ # ls -l /mnt/tmp/boot/grub
+total 260
+-rw-r--r-- 1 root root     15 Dec 30  2007 device.map
+-rw-r--r-- 1 root root   7552 Dec 30  2007 e2fs_stage1_5
+-rw-r--r-- 1 root root   6720 Dec 30  2007 ffs_stage1_5
+-rw-r--r-- 1 root root    742 Dec 30  2007 menu.lst
+-rw-r--r-- 1 root root   6880 Dec 30  2007 minix_stage1_5
+-rw-r--r-- 1 root root    512 Dec 30  2007 stage1
+-rw-r--r-- 1 root root 108328 Dec 30  2007 stage2
+-rw-r--r-- 1 root root 108328 Dec 30  2007 stage2_eltorito
+ # exit                          
+ $ cd /src3/KVM
+ $ sudo umount /mnt/tmp /mnt/tmp1
+ # Preparing the MBR (Master Boot Record) for Deb-Hurd-L1.img
+ $ kvm Deb-Hurd-L1.img -fda grub-floppy.img -boot a
+ grub> find /boot/gnumach.gz
+ (hd0,0)
+ grub> root (hd0,0)
+ grub> setup (hd0)
+ grub> halt
+ # Now, we are ready! First, boot hurd in single user mode.  If not enough memory, 
+ # native-install will hang!! We ask for 512 MB.
+ $ kvm -m 512 Deb-Hurd-L1.img
+ # export TERM=mach
+ # ./native-install
+ $ kvm -m 512 Deb-Hurd-L1.img
+ login root
+ adduser --help | more
+ adduser --home /home/hsu --shell /bin/bash hsu
+ passwd root
+ passwd hsu
+ ls -l /home/hsu
+ su
+ /sbin/halt
+</PRE>
+
+<h3>Hurd Networking</h3>
+
+<b>Note:</b> We use character: ;; to introduce comments, since we are working in the su
+mode.
+
+<PRE>
+ $ su
+ # devprobe eth0
+eth0
+ ;; Using physical host as gateway, e.g. IP for amd-6 is 192.168.0.32.
+ # settrans -fgap /servers/socket/2 /hurd/pfinet -i eth0 -a 192.168.0.252 -g 192.168.0.32 -m 255.255.255.0
+ ;; From the Physical Host, (Hurd hasn't yet installed inet utilities, such as ping.)
+ $ ping -c 3 192.168.0.252
+ PING 192.168.0.252 (192.168.0.252) 56(84) bytes of data.
+ 64 bytes from 192.168.0.252: icmp_seq=1 ttl=255 time=1008 ms
+ 64 bytes from 192.168.0.252: icmp_seq=2 ttl=255 time=9.17 ms
+ 64 bytes from 192.168.0.252: icmp_seq=3 ttl=255 time=4.78 ms
+
+ --- 192.168.0.252 ping statistics ---
+ 3 packets transmitted, 3 received, 0% packet loss, time 2012ms
+ rtt min/avg/max/mdev = 4.789/340.911/1008.774/472.253 ms
+ # nano /etc/apt/sources.list
+ # more /etc/apt/sources.list
+ deb     http://mirrors.kernel.org/debian unstable main contrib
+ deb-src http://mirrors.kernel.org/debian unstable main contrib
+ deb     http://ftp.debian-ports.org/debian unreleased main
+ deb-src http://ftp.debian-ports.org/debian unreleased main
+ ;; Network need to be set each time after booting, hence ConfigNetwork script is 
+ ;; parpared.
+ # more ConfigNetwork
+ #! /bin/bash
+ 
+ if [ $UID != 0 ]
+   then echo "You must be root, sorry!"
+        exit 1
+ fi
+
+ settrans -fgap /servers/socket/2 /hurd/pfinet -i eth0 -a 192.168.0.252 -g 192.168.0.254 -m 255.255.255.0
+
+ /etc/init.d/ssh restart
+ ;; For network to start automatically, /etc/network/interfaces is always the file to 
+ ;; configure in the Debian environment:
+ # diff /etc/network/interfaces /etc/network/interfaces.orig
+ 6,14d5
+ < 
+ < iface eth0 inet static
+ <    address 192.168.0.252
+ <    netmask 255.255.255.0
+ <    network 192.168.0.0
+ <    broadcast 192.168.0.255
+ <    gateway 192.168.0.1
+ <    # dns-* options are implemented by the resolvconf package, if installed
+ <    dns-nameservers 168.95.192.1 140.120.1.2
+ # diff /etc/hostname /etc/hostname.orig
+ 1c1
+ < hurd
+ ---
+ > (null)
+ # apt-get update
+ # apt-get upgrade
+ ;; Normal user's PATH does not include /usr/local/sbin:/usr/sbin:/sbin, even
+ ;; after su.  Need to add them by 
+ # PATH=$PATH:/usr/local/sbin:/usr/sbin:/sbin
+ ;; After su, must set PATH to include /usr/local/sbin:/usr/sbin:/sbin, hence define 
+ ;; setSuPath function in func file:
+ # more func
+ setSuPath ()
+ {
+ PATH=/usr/local/sbin:/usr/sbin:/sbin:$PATH;
+ export PATH;
+ }
+ # . func
+ # setSuPath
+ # echo $PATH
+ /usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin:/usr/games
+ # apt-get upgrade
+ # apt-get clean
+ # apt-cache search openssh
+ # apt-cache show openssh-client
+ # apt-cache show openssh-server
+ # apt-get install openssh-client
+ ;; A lot X11 packages get installed by the above command.
+ # mv /etc/resolv.conf  /etc/resolv.conf.orig
+ # cp /etc/resolv.conf.orig /etc/resolv.conf
+ # nano  /etc/resolv.conf
+ # more /etc/resolv.conf
+ ....
+ ....
+ nameserver 192.168.0.254
+ nameserver 168.95.192.1
+ nameserver 140.120.1.2
+ # apt-get upgrade
+ ....
+ ....
+ Setting up openssh-server (1:5.2p1-2) ...
+ Creating SSH2 RSA key; this may take some time ...PRNG is not seeded
+ ;; When ssh inscribe your input, it needs some random seed produced by 
+ ;; /dev/random or /dev/urandom.  Hurd does not install these devices.
+</PRE>
+
+<h3>start-Hurd and stop-Hurd-restore-lan scripts</h3>
+<P> The two shell scripts <b>start-Hurd</b> and <b>stop-Hurd-restore-lan</b>
+are generated via <b>Config-KVM</b> script, as follows:
+
+<PRE>
+$ Config-KVM ../Hurd/Deb-Hurd-L1.img Hurd 192.168.0.252 eth2 2
+# The first argument is Hurd template, the second one is the hostname of VM,
+# the third one is VM IP, the fourth one is the internet ether card of the 
+# host machine, the fifth one is the number of tap device, such as tap2.
+#
+# Hurd does not follow the sysinit tradition of Unix. Hence, "init 0" is useless.
+# Similar to Minix, we use /sbin/poweroff to shut it down (, but not gracefully).
+$ diff bin/stop-Hurd-restore-lan-2 bin/stop-Hurd-restore-lan-2.orig
+38c38
+<        ssh -t hsu@192.168.0.252 'sudo /sbin/poweroff'
+---
+>        ssh -t hsu@192.168.0.252 'sudo init 0'
+# Similar to Minix, <b>stop-Hurd-restore-lan-2</b> must be executed twice.  Because
+# the command <b>sudo /sbin/poweroff</b> will hang the terminal as usual.  We must
+# execute it one more time (in a new tab) to restore the network.
+</PRE>
+
+<h3>SSH Configuration:
+<a href="http://uwhug.org.uk/index.pl?Hurd_Installation_Guide" 
+target="newwindow">Set SSH To Work</a></h3>
+
+<a name="RandSer"><h4>ssh</h4></a>
+
+To get ssh working you need a random device. Since the Hurd does not come with one 
+you will either have to move some binary file in its place and pretend it is random, 
+or, better, install a random device by running the following:
+
+<PRE>
+ ;; In normal user mode
+ $ cd && mkdir tmp && cd tmp
+ ;; halt the Hurd, since we need to mount its image from the physical host.
+ ;; In physical host, download random-64.tar.gz
+ $ wget http://kilobug.free.fr/hurd/random-64.tar.gz
+ $ sudo mount -o loop,offset=32256 ../Hurd/Deb-Hurd-L1.img /mnt/tmp
+ $ ls -l /mnt/tmp/home/hsu/tmp
+ total 0
+ $ sudo cp random-64.tar.gz /mnt/tmp/home/hsu/tmp
+ $ ls -l /mnt/tmp/home/hsu/tmp
+ total 92
+ -rw-r--r-- 1 root root 88480 Jan 24 22:37 random-64.tar.gz
+ ;; Re-start Hurd and login
+ $ cd tmp
+ $ tar xvfz random-64.tar.gz
+ $ ls -l 
+ total 96
+ drwxr-xr-x 2  hsu nogroup  4096 Sep 28  2002 random
+ -rw-r--r-- 1 root root    88480 Jan 24 22:37 random-64.tar.gz
+ $ su
+ # cp random/random /hurd/
+ # cd .. 
+ # . func
+ # setSuPath
+ # settrans -c /dev/random /hurd/random --seed-file /var/run/random-seed --secure
+ # settrans -c /dev/urandom /hurd/random --seed-file /var/run/urandom-seed --fast
+ # chmod 0644 /dev/random /dev/urandom
+ # apt-get upgrade
+ ;; Hopefully, openssh-server is configured, and you may remote login hurd after 
+ ;; finishing the next few steps.
+</PRE>
+
+This will also start the ssh server, but currently there is a bug with privilege 
+separation. If you want to be able to login as a non-root user, edit 
+/etc/ssh/sshd_config, and change the line:
+
+<PRE>
+ UsePrivilegeSeparation yes
+</PRE>
+
+to
+
+<PRE>
+ UsePrivilegeSeparation no
+</PRE>
+
+and run
+
+<PRE>
+ # /etc/init.d/ssh restart
+ grep: /proc/self/status: No such file or directory
+ Restarting OpenBSD Secure Shell server: sshd.
+ ;; Hopefully, you should be able to remote login hurd from your physical host:
+ $ ssh -X hsu@192.168.0.252
+ The authenticity of host '192.168.0.252 (192.168.0.252)' can't be established.
+ RSA key fingerprint is 14:20:c9:14:4a:4f:50:87:56:f3:8e:b6:57:f8:1c:3f.
+ Are you sure you want to continue connecting (yes/no)? yes
+ Warning: Permanently added '192.168.0.252' (RSA) to the list of known hosts.
+ hsu@192.168.0.252's password: 
+ GNU (null) 0.3 GNU-Mach 1.3.99/Hurd-0.3 i686-AT386
+
+ The programs included with the Debian GNU/Hurd system are free software;
+ the exact distribution terms for each program are described in the
+ individual files in /usr/share/doc/*/copyright.
+
+ Debian GNU/Hurd comes with ABSOLUTELY NO WARRANTY, to the extent
+ permitted by applicable law.
+ hsu@(null):~$ ls -l 
+ total 56
+ -rwxr-xr-x 1 hsu  nogroup   193 Jan 24 15:39 ConfigNetwork
+ -rwxr-xr-x 1 hsu  nogroup   203 Jan 24 09:25 ServUsg
+ -rw-r--r-- 1 hsu  nogroup 40277 Jan 24 09:31 ServerUsages.txt
+ -rw-r--r-- 1 root root       74 Jan 24 22:08 func
+ drwxr-xr-x 3 hsu  nogroup  4096 Jan 24 22:46 tmp
+ ;; It seems that we must restart ssh daemon each time we boot Hurd so that it will
+ ;; accept ssh remote login.  Yes!!
+ ;; After login hsu; change mode to super user, configure network, and set PATH
+ ;; to include /usr/local/sbin:/usr/sbin:/sbin.  
+ ;; Note: In ConfigNetwork, we also start sshd.  This takes time, A lot of time!
+ $ su
+ # ./ConfigNetwork
+ # . func
+ # setSuPath
+ ;; We see two partitions we made during hurd installation:
+ ;; /dev/hd0p1 and /dev/hd0p2.  But it seems Hurd refers them
+ ;; as /dev/hd0s1 and /dev/hd0s2
+ # fdisk /dev/hd0
+
+ The number of cylinders for this disk is set to 10402.
+ There is nothing wrong with that, but this is larger than 1024,
+ and could in certain setups cause problems with:
+ 1) software that runs at boot time (e.g., old versions of LILO)
+ 2) booting and partitioning software from other OSs
+    (e.g., DOS FDISK, OS/2 FDISK)
+
+ Command (m for help): p
+
+ Disk /dev/hd0: 5368 MB, 5368709120 bytes
+ 16 heads, 63 sectors/track, 10402 cylinders
+ Units = cylinders of 1008 * 512 = 516096 bytes
+ Disk identifier: 0x00000000
+
+     Device Boot      Start         End      Blocks   Id  System
+ /dev/hd0p1   *           1        8913     4492120+  83  Linux
+ /dev/hd0p2            8914       10402      750456   82  Linux swap / Solaris
+
+ Command (m for help): q
+
+ # exit
+ $ cd /dev
+ $ ./MAKEDEV -n -v hd0p1
+ ./MAKEDEV: hd0p1: Invalid slice or partition syntax
+ ;; Not running the commands in MAKEDEV, only tell us what will actually be done.
+ $ ./MAKEDEV -n -v hd0s1
+ settrans -cg hd0s1
+ chown root hd0s1
+ chmod 640 hd0s1
+ settrans hd0s1 /hurd/storeio hd0s1
+ # su
+ # ./MAKEDEV -v hd0s1
+ settrans -cg hd0s1
+ chown root hd0s1
+ chmod 640 hd0s1
+ settrans hd0s1 /hurd/storeio hd0s1
+ # ls -l /dev/hd*
+ brw-r----- 1 root root 0, 0 Jan 23 14:42 /dev/hd0
+ brw-r----- 1 root root 0, 0 Jan 29 10:55 /dev/hd0s1
+ # apt-get upgrade
+ ;; Only after this stage; grub-pc can be setup!!
+ ;; Let us also make device file for second partition
+ #  ./MAKEDEV -v hd0s2
+ settrans -cg hd0s2
+ chown root hd0s2
+ chmod 640 hd0s2
+ settrans hd0s2 /hurd/storeio hd0s2
+ ;; Now create /etc/fstab file by ourselves.
+ # nano /etc/fstab
+ # more /etc/fstab
+ # <file system> <mount point>   <type>  <options>  <dump>  <pass>
+ /dev/hd0s1      /               ext2    rw         0       1
+ /dev/hd0s2      none            swap    sw         0       0
+</PRE>
+
+<h3>Emacs</h3>
+
+<pre>
+ # apt-cache search emacs | more 
+ # apt-get install emacs22 
+ ;; Remotely login from physical host
+ $ ssh -X hsu@192.168.0.252
+ $ emacs ServerUsages.txt
+ Fatal error (11)Segmentation fault
+ ;; It seems emacs is supported via emacs22-x, X window based emacs?  While 
+ ;; installing emacs22, quite a few X11 packages were installed.  However,
+ ;; we haven't installed X11 window system yet! 
+ $ ls -l /etc/alter*/emacs   
+ lrwxr-xr-x 1 root root 18 Jan 27 13:32 /etc/alternatives/emacs -> /usr/bin/emacs22-x
+ # apt-get -f install xterm
+ ;; Error message abount xterm installation
+ # apt-get -f --fix-missing install xterm
+ ;; Now, we have /usr/bin/xterm and can run it to get a new xterm window.
+ ;; Still no luck for emacs.
+ # apt-get -f --fix-missing install libx11-6 libx11-data libx11-dev x11-apps x11-common x11-session-utils x11-utils x11-xfs-utils x11-xkb-utils x11-xserver-utils x11proto-core-dev x11proto-input-dev x11proto-kb-dev x11proto-xext-dev
+ ;; Installed Emacs failed with segmentation fault. Probably need to load
+ ;; its source from <a href="http://ftp.gnu.org/pub/gnu/emacs/">Emacs23 Source</a>
+ # apt-get install gcc-4.4
+ # cwd=`pwd`; cd /usr/bin; ln -s gcc-4.4 cc; cd $cwd
+ # apt-get install xaw3dg-dev
+ # apt-get install libjpeg62-dev libpng12-dev libtiff4-dev libgif-dev
+ # apt-get install make
+ ;; In X11R5, there isn't Xaw3d, only Xaw (athena widget set).
+ # cwd=`pwd`; cd /usr/include/X11; ln -s Xaw3d Xaw; cd $cwd
+ ;; Emacs compiled successfully, but got only blank window. Even cannot take it down.
+ ;; Disable X completely, but we need termcap.h from libncurses5-dev package.
+ $ more myconf.console
+ #!/bin/sh
+ cpuarc="i386" #CPU architecture, such as: i686
+ ../configure  --prefix=/usr/local --with-x=no --with-x-toolkit=no --with-xpm=no 
+ --with-jpeg=no --with-tiff=no --with-gif=no --with-png=no #--with-x-toolkit=lucid
+ # apt-get install libncurses5-dev libncursesw5-dev
+ # cwd=`pwd`; cd /usr/include/; ln -s ncursesw/termcap.h termcap.h; cd $cwd
+ ;; "Cannot open termcap file" (from src/term.c) message persisted.
+ ;; Probably, terminfo will be more civilized?  Let's see
+ # apt-get install libghc6-terminfo-dev
+ ;; The above step also installed gcc-4.1 and linked gcc to gcc-4.4.
+ ;; Now, emacs is OK, finally.  We are going to try Emacs with X11.
+ ;; Successfully compiled emacs22, but still got blank window. But,
+ ;; may start it via "src/emacs -nw myconf", i.e. no window option.
+ ;; Let us get the official emacs source from debian and let debian 
+ ;; software maintenance system do its work for us.  
+ ;; Apparently, we need a lot of packages from debian for its software 
+ ;; maintenance system to work!!
+ ;; After all efforts, Emacs with X window support compilation was successful, 
+ ;; still, when starting emacs, it failed miserably! (A blank window, again!)
+ ;; The following Debian source code maintenance packages are installed:
+ # apt-get install libghc6-x11-dev
+ # apt-get install dpkg-dev
+ # apt-get install debhelper ;; for dh_testdir
+ # apt-get install quilt  ;; Tool to work with series of patches
+ # apt-get install libtool  ;; `/usr/share/misc/config.sub': No such file or directory
+ # apt-get install pkg-config  ;; The pkg-config script could not be found. 
+ # apt-get install libgtk2.0-dev  ;; Package gtk+-2.0 was not found. A whole bunch of
+                                  ;; new libs got installed.  Such a heavy burden!
+ # addgroup messagebus ;; Otherwise, dbus (1.2.16-2) failed to setup.
+ # apt-get install liblockfile-dev  ;; Debian requires that mail locking be handled 
+                                    ;; by liblockfile.
+ # apt-get install aptitude ;; Aptitude is more civilized?
+ # apt-get install deborphan ;; To get rid of orphaned packages.
+ # deborphan
+ diff ;; Something wrong, we can not remove diff!
+ # which diff
+ /usr/bin/diff
+ ;; Execute the following in normal user mode, otherwise files owned by root.
+ # apt-get install xinit
+ # apt-get install console-driver-xkb
+ # apt-get install wdm
+ # emacs /etc/default/hurd-console
+ # mv /etc/default/hurd-console~ /etc/default/hurd-console.orig
+ # diff /etc/default/hurd-console /etc/default/hurd-console.orig
+ 4c4
+ < ENABLE='true'
+ ---
+ > ENABLE='false'
+ 11c11
+ < # KBD='-d pc_kbd'
+ ---
+ > KBD='-d pc_kbd'
+ 24c24
+ < KBD='-d xkb'
+ ---
+ > #KBD='-d xkb'
+ 27c27
+ < KBD_REPEAT='--repeat=kbd'
+ ---
+ 
+ > #KBD_REPEAT='--repeat=kbd'
+ 33c33
+ < MOUSE_REPEAT='--repeat=mouse'
+ ---
+ > #MOUSE_REPEAT='--repeat=mouse'
+ <a href="http://www.gnu.org/software/hurd/hurd/running/debian/after_install.html#index4h1" target="newwindow">After Hurd Install</a>
+ # aptitude update
+ # aptitude install lxde
+ ;; Mimic what we did for Minix3, get a copy of xorg.conf from Debian, edited it,
+ ;; scp to hurd.  Now startx complaining: VESA(0): No matching modes
+ <a href="http://packages.debian.org/sid/hurd-i386/xserver-xorg-video-vesa/download" 
+ target="newwindow">xserver-xorg-video-vesa</a>
+ ;; Hardware abstraction layer is really annoying, get rid of it.
+ # apt-get remove hal
+ # apt-cache search x-window-system-core
+ # apt-get install xorg
+ <a href="http://www.gentoo.org/doc/en/xorg-config.xml"
+ target="newwindow">The X Server Configuration HOWTO</a> or searching for "xorg.conf auto generation"
+</Pre>
+
+<h3>Our own Hurd References</h3>
+<OL>
+<LI><a href="http://140.120.7.20/backup/KVM-tool/Hurd/"
+     target="newwindow">Hurd Directory</a>
+<LI><a href="http://140.120.7.20/backup/KVM-tool/Hurd/ServUsg.html"
+     target="newwindow">Hurd Server Usages</a>
+<LI><a href="http://140.120.7.20/backup/KVM-tool/Hurd/"
+     target="newwindow"></a>
+</OL>
+<h3>Questions</h3>
+ 
+<OL>
+  <LI> <code># /sbin/fdisk /dev/hd0</code>:
+
+<P> We see <code>/dev/hd0p1</code> and <code>/dev/hd0p2</code> two hard disk 
+    devices, but not in <b>/dev</b> directory.
+</OL>
+</body></html>

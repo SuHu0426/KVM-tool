@@ -1,0 +1,13 @@
+# libpthread must be stripped specially; GDB needs the non-dynamic 
+# symbol table in order to load the thread debugging library.
+libc0.3: unstripped-binary-or-object ./lib/libpthread-2.9.so
+
+# ld.so must be executable, otherwise the system will not work
+libc0.3: shlib-with-executable-bit ./lib/ld-2.9.so 0755
+
+# It is normal that the ELF dynamic linker does not need any other 
+# library
+libc0.3: shared-lib-without-dependency-information ./lib/ld-2.9.so
+
+# dependency on debconf is not needed, as glibc has a fallback to tty 
+libc0.3: missing-debconf-dependency-for-preinst
